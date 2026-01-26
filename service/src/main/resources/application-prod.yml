@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:mysql://prod-db:3306/star_reward?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+logging:
+  level:
+    root: WARN
+    com.star.reward: INFO

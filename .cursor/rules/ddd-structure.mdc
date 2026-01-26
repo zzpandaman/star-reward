@@ -1,0 +1,274 @@
+---
+description: DDD 架构规范和对象转换规则
+globs:
+  - "**/*.java"
+alwaysApply: true
+---
+
+# DDD 架构规范
+
+## 项目结构
+
+本项目采用 DDD（领域驱动设计）分层架构，包含以下模块：
+
+### 模块划分
+
+- **api-client**: Feign API 二方包模块，独立打包供其他服务依赖
+- **service**: 主服务模块，包含完整的 DDD 分层架构
+
+## DDD 分层结构
+
+### Domain (领域层)
+
+**路径**: `service/src/main/java/com/star/reward/domain/`
+
+- `model/entity/` - 领域实体（Domain Model）
+- `model/valueobject/` - 值对象
+- `model/aggregate/` - 聚合根
+- `service/` - 领域服务
+- `repository/` - 仓储接口（只定义接口，不包含实现）
+- `event/` - 领域事件
+- `exception/` - 领域异常
+
+**规则**：
+
+- 领域层不依赖任何基础设施层代码
+- 领域实体使用纯 Java 对象，不包含 JPA/MyBatis 注解
+- 领域实体命名使用业务术语，不使用技术术语
+
+### Application (应用层)
+
+**路径**: `service/src/main/java/com/star/reward/application/`
+
+- `service/` - 应用服务（用例编排）
+- `dto/request/` - 请求 DTO
+- `dto/response/` - 响应 DTO
+- `command/` - 命令对象（CQRS）
+- `query/` - 查询对象（CQRS）
+- `scheduler/` - 定时任务
+
+**规则**：
+
+- 应用服务负责用例编排，不包含业务逻辑
+- 应用服务可以调用领域服务和仓储
+- DTO 用于应用层与接口层之间的数据传输
+
+### Infrastructure (基础设施层)
+
+**路径**: `service/src/main/java/com/star/reward/infrastructure/`
+
+- `persistence/`
+  - `dao/` - MyBatis DAO（由 Generator 生成）
+    - `mapper/` - Mapper 接口
+    - `entity/` - DO 实体（Data Object）
+  - `repository/` - 仓储实现
+  - `converter/` - **对象转换器（统一放置）**
+- `config/` - 配置类
+- `external/feign/` - 调用其他服务的 Feign 客户端
+
+**规则**：
+
+- DO 实体由 MyBatis Generator 生成，不要手动修改
+- 所有对象转换逻辑统一放在 `converter/` 目录
+- 仓储实现负责 DO 与领域模型的转换
+
+### Interfaces (接口层)
+
+**路径**: `service/src/main/java/com/star/reward/interfaces/`
+
+- `rest/` - REST API
+  - `controller/` - 控制器
+  - `importexport/` - 导入导出
+    - `dto/` - 导入导出 DTO
+    - `handler/` - 导入导出处理器
+- `feign/impl/` - Feign 接口实现
+
+## 对象类型和转换规范
+
+### 对象类型定义和命名后缀
+
+1. **DO (Data Object)**: 数据库持久化对象
+   - 位置: `infrastructure/persistence/dao/entity/`
+   - 命名: `XxxDO`（如 `TaskTemplateDO`、`ProductDO`）
+   - 后缀: **DO**
+   - 由 MyBatis Generator 生成，包含数据库映射注解（`@Table`、`@Column` 等）
+
+2. **BO (Business Object)**: 领域层核心实体
+   - 位置: `domain/model/entity/`
+   - 命名: `XxxBO`（如 `TaskTemplateBO`、`TaskInstanceBO`、`ProductBO`）
+   - 后缀: **BO**
+   - 纯 Java 对象，不包含持久化注解
+
+3. **VO (Value Object)**: 值对象
+   - 位置: `domain/model/valueobject/`
+   - 命名: `XxxVO` 或业务术语（如 `Money`、`TimeRange`、`InventoryTypeVO`）
+   - 后缀: **VO** 或业务术语
+   - 不可变对象，通过值相等性判断
+
+4. **Request DTO**: 请求数据传输对象
+   - 位置: `application/dto/request/`
+   - 命名: `XxxRequest` 或 `CreateXxxRequest`、`UpdateXxxRequest`、`QueryXxxRequest`
+   - 后缀: **Request**
+   - 包含校验注解（如 `@NotBlank`、`@Email`、`@Valid`）
+
+5. **Response DTO**: 响应数据传输对象
+   - 位置: `application/dto/response/`
+   - 命名: `XxxResponse`
+   - 后缀: **Response**
+   - 用于返回给前端的数据结构
+
+6. **Command (命令对象)**: CQRS 命令
+   - 位置: `application/command/`
+   - 命名: `CreateXxxCommand`、`UpdateXxxCommand`、`DeleteXxxCommand`
+   - 后缀: **Command**
+   - 用于写操作的命令对象
+
+7. **Query (查询对象)**: CQRS 查询
+   - 位置: `application/query/`
+   - 命名: `XxxQuery`、`ListXxxQuery`、`GetXxxQuery`
+   - 后缀: **Query**
+   - 用于读操作的查询对象
+
+8. **Import/Export DTO**: 导入导出数据传输对象
+   - 位置: `interfaces/rest/importexport/dto/`
+   - 命名: `XxxImportDTO`、`XxxExportDTO`
+   - 后缀: **ImportDTO**、**ExportDTO**
+   - 包含 EasyExcel 注解
+
+### 对象后缀总结
+
+| 对象类型 | 后缀 | 示例 | 位置 |
+|---------|------|------|------|
+| Data Object | DO | `TaskTemplateDO` | `infrastructure/persistence/dao/entity/` |
+| Business Object | BO | `TaskTemplateBO` | `domain/model/entity/` |
+| Value Object | VO 或业务术语 | `Money`、`InventoryTypeVO` | `domain/model/valueobject/` |
+| Request DTO | Request | `CreateTaskTemplateRequest` | `application/dto/request/` |
+| Response DTO | Response | `TaskTemplateResponse` | `application/dto/response/` |
+| Command | Command | `CreateTaskTemplateCommand` | `application/command/` |
+| Query | Query | `TaskTemplateQuery` | `application/query/` |
+| Import DTO | ImportDTO | `TaskTemplateImportDTO` | `interfaces/rest/importexport/dto/` |
+| Export DTO | ExportDTO | `TaskTemplateExportDTO` | `interfaces/rest/importexport/dto/` |
+
+**注意**：
+- **BO (Business Object)** 在 DDD 架构中通常指 Domain Model，不使用 BO 后缀
+- **AO (Application Object)** 在 CQRS 模式中使用 Command/Query，不使用 AO 后缀
+- 所有对象类型必须严格遵循命名规范，保持代码一致性
+
+### 转换器规范
+
+**所有对象转换逻辑统一放在 `infrastructure/persistence/converter/` 目录**
+
+转换器命名: `XxxConverter`
+
+转换器应包含以下转换方法：
+
+```java
+@Component
+public class XxxConverter {
+    // DO <-> Domain Model
+    public Xxx toDomain(XxxDO do);
+    public XxxDO toDO(Xxx domain);
+    
+    // Request DTO -> Domain Model
+    public Xxx toDomain(CreateXxxRequest request);
+    
+    // Domain Model -> Response DTO
+    public XxxResponse toResponse(Xxx domain);
+    
+    // Import/Export DTO <-> Domain Model
+    public Xxx toDomain(XxxImportDTO importDTO);
+    public XxxExportDTO toExportDTO(Xxx domain);
+}
+```
+
+**转换规则**：
+
+- 所有转换方法必须处理 null 值，返回 null
+- 转换方法命名使用 `to` 前缀（如 `toDomain`、`toDO`、`toResponse`）
+- 转换器使用 `@Component` 注解，由 Spring 管理
+- 不要在应用层或接口层创建独立的 Mapper 类，统一使用 Converter
+
+## 命名规范
+
+### 类命名
+
+- **领域实体**: `XxxBO`，如 `TaskTemplateBO`、`TaskInstanceBO`、`ProductBO`
+- **DO 实体**: `XxxDO`，如 `UserDO`、`OrderDO`
+- **DTO**: `XxxRequest`、`XxxResponse`、`XxxImportDTO`、`XxxExportDTO`
+- **转换器**: `XxxConverter`
+- **仓储接口**: `XxxRepository`
+- **仓储实现**: `XxxRepositoryImpl`
+- **应用服务**: `XxxApplicationService`
+- **控制器**: `XxxController`
+
+### 包命名
+
+- 使用小写字母，按功能模块划分
+- 包结构遵循 DDD 分层：`domain`、`application`、`infrastructure`、`interfaces`
+
+## 依赖关系
+
+```
+interfaces → application → domain
+infrastructure → domain
+shared (被所有层使用)
+```
+
+**依赖规则**：
+
+- 领域层不依赖任何其他层
+- 应用层只依赖领域层
+- 基础设施层只依赖领域层
+- 接口层依赖应用层和领域层
+- 所有层都可以使用共享层
+
+## 代码组织
+
+### 文件放置规则
+
+1. **转换器**: 统一放在 `infrastructure/persistence/converter/`
+2. **仓储实现**: 放在 `infrastructure/persistence/repository/`
+3. **应用服务**: 放在 `application/service/`
+4. **控制器**: 放在 `interfaces/rest/controller/`
+5. **DTO**: 根据用途放在对应的 `dto/` 目录
+
+### MyBatis Generator 生成的文件
+
+以下文件由 Generator 生成，**不要手动修改**：
+
+- `infrastructure/persistence/dao/mapper/` 下的 Mapper 接口
+- `infrastructure/persistence/dao/entity/` 下的 DO 实体
+- `resources/mapper/` 下的 XML 文件
+
+自定义 Mapper 放在 `resources/mapper/custom/` 目录下。
+
+## 仓储实现规范
+
+### Repository 实现注意事项
+
+1. **Mapper 使用**: 仓储实现使用 MyBatis Generator 生成的 Mapper 接口
+   - 使用 `selectByPrimaryKey` 进行主键查询
+   - 使用 `selectByExample` 进行条件查询（需要创建 Example 对象）
+   - 使用 `insertSelective` 进行插入
+   - 使用 `updateByPrimaryKeySelective` 进行更新
+
+2. **逻辑删除**: 所有查询方法必须过滤 `is_deleted = 0` 的记录
+   - 在 Example 中设置 `isDeleted = 0`
+   - 或在查询后过滤已删除记录
+
+3. **DO 转换**: 仓储实现负责 DO 与领域模型的转换
+   - 使用 Converter 进行转换
+   - 查询时：DO → Domain Model
+   - 保存时：Domain Model → DO
+
+4. **异常处理**: 仓储实现不抛出业务异常，只处理数据访问异常
+
+## 最佳实践
+
+1. **转换逻辑集中管理**: 所有对象转换统一在 Converter 中，避免分散在多个类中
+2. **领域模型纯净**: 领域实体不包含任何基础设施相关注解
+3. **分层隔离**: 严格遵守依赖方向，领域层保持独立
+4. **命名一致性**: 遵循统一的命名规范，提高代码可读性
+5. **空值处理**: 所有转换方法必须处理 null 值情况
+6. **值对象使用**: 枚举类型、状态码等使用值对象（VO）封装，提高类型安全性
+7. **仓储接口设计**: 仓储接口定义在领域层，只包含领域相关的查询方法

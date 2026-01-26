@@ -1,0 +1,315 @@
+---
+description: 数据库表设计和 SQL 规范
+globs:
+  - "**/*.sql"
+  - "**/generatorConfig.xml"
+alwaysApply: true
+---
+
+# 数据库表设计和 SQL 规范
+
+## 表设计规范
+
+### 1. 字段类型规范
+
+#### 整数类型
+
+- **int**: 根据业务需要设置长度，按需使用 `UNSIGNED`
+  - 示例：`int UNSIGNED NOT NULL COMMENT '用户ID'`
+  - 示例：`tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否删除。0-否 1-是'`
+- **bigint**: 用于主键或大数值，使用 `UNSIGNED`
+  - 示例：`bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键'`
+
+#### 字符串类型
+
+- **varchar**: 必须预设长度，根据业务需要设置
+  - 短文本：`varchar(32)` - 编号、状态码等
+  - 中文本：`varchar(200)` - 名称、标题等
+  - 长文本：`varchar(500)` - 描述等
+  - 超长文本：`varchar(512)` - 备注等
+  - 邮箱：`varchar(128)` - 邮箱地址
+- **字符集**: 统一使用 `utf8mb4`，排序规则使用 `utf8mb4_general_ci`
+
+#### 数值类型
+
+- **decimal**: 用于金额、积分等精确数值
+  - 示例：`decimal(10,2) UNSIGNED NOT NULL DEFAULT 0.00 COMMENT '积分'`
+  - 格式：`decimal(精度,小数位)`
+
+#### 时间类型
+
+- **datetime**: 用于日期时间字段
+  - 创建时间：`datetime NOT NULL DEFAULT CURRENT_TIMESTAMP`
+  - 更新时间：`datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`
+- **bigint**: 用于时间戳（秒级）
+  - 示例：`bigint UNSIGNED NOT NULL COMMENT '开始时间戳'`
+
+#### JSON 类型
+
+- **json**: 用于扩展字段
+  - 示例：`json NULL COMMENT '扩展字段'`
+
+### 2. 必需字段
+
+每个表必须包含以下字段：
+
+#### 主键和业务编号
+
+```sql
+`id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+`xxx_no` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '业务编号',
+```
+
+#### 逻辑删除
+
+```sql
+`is_deleted` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否删除。0-否 1-是',
+```
+
+#### 备注
+
+```sql
+`remark` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '备注',
+```
+
+#### 扩展字段
+
+```sql
+`attributes` json NULL COMMENT '扩展字段',
+```
+
+#### 创建人信息
+
+```sql
+`create_by` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '创建人名字',
+`create_by_email` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '创建人邮箱',
+```
+
+#### 创建时间
+
+```sql
+`create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+```
+
+#### 更新人信息
+
+```sql
+`update_by` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '更新人名字',
+`update_by_email` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '更新人邮箱',
+```
+
+#### 更新时间
+
+```sql
+`update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+```
+
+### 3. 字段非空规范
+
+- **业务必需字段**: 必须设置 `NOT NULL`
+- **可选字段**: 允许为 `NULL`，但需在注释中说明
+- **默认值**: 根据业务需要设置 `DEFAULT` 值
+
+### 4. 索引规范
+
+#### 索引命名规范
+
+- **普通索引**: `idx_字段名`，如 `idx_user_id`、`idx_status`
+- **唯一索引**: `udx_字段名`，如 `udx_template_no`、`udx_product_no`
+- **组合索引**: `idx_字段1_字段2`，如 `idx_user_id_status`
+
+#### 必需索引
+
+- **主键**: `PRIMARY KEY (id)`
+- **业务编号唯一索引**: `UNIQUE KEY udx_xxx_no (xxx_no)`
+- **逻辑删除索引**: `INDEX idx_is_deleted (is_deleted)`
+- **创建时间索引**: `INDEX idx_create_time (create_time)`
+
+#### 业务索引
+
+根据查询需求创建：
+
+- 外键字段索引（如 `user_id`、`task_template_id`）
+- 状态字段索引（如 `status`、`is_preset`）
+- 时间字段索引（如 `start_time`、`end_time`）
+- 组合查询索引
+
+#### 索引示例
+
+```sql
+PRIMARY KEY (`id`),
+UNIQUE KEY `udx_template_no` (`template_no`) USING BTREE,
+INDEX `idx_user_id` (`user_id`) USING BTREE,
+INDEX `idx_status` (`status`) USING BTREE,
+INDEX `idx_is_deleted` (`is_deleted`) USING BTREE,
+INDEX `idx_create_time` (`create_time`) USING BTREE
+```
+
+### 5. 表结构示例
+
+```sql
+CREATE TABLE `reward_task_templates` (
+ `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+ `template_no` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '模板编号',
+ `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '任务名称',
+ `description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '任务描述',
+ `is_preset` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否为预设任务。0-否 1-是',
+ `remark` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '备注',
+ `create_by` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '创建人名字',
+ `create_by_email` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '创建人邮箱',
+ `update_by` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '更新人名字',
+ `update_by_email` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '更新人邮箱',
+ `attributes` json NULL COMMENT '扩展字段',
+ `is_deleted` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否删除。0-否 1-是',
+ `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+ `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+ PRIMARY KEY (`id`),
+ UNIQUE KEY `udx_template_no` (`template_no`) USING BTREE,
+ INDEX `idx_is_preset` (`is_preset`) USING BTREE,
+ INDEX `idx_is_deleted` (`is_deleted`) USING BTREE,
+ INDEX `idx_create_time` (`create_time`) USING BTREE
+) ENGINE=InnoDB
+DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci
+COMMENT='任务模板表';
+```
+
+### 6. 表命名规范
+
+- **表名**: 使用小写字母，单词间用下划线分隔
+- **前缀**: 根据服务模块使用前缀（如 `reward_`、`user_`）
+- **命名**: 使用复数形式，如 `reward_task_templates`、`reward_products`
+
+### 7. 注释规范
+
+- **表注释**: `COMMENT='表说明'`
+- **字段注释**: `COMMENT='字段说明'`
+- **枚举值说明**: 在注释中说明，如 `COMMENT='状态。running-运行中 paused-已暂停 completed-已完成'`
+- **默认值说明**: 在注释中说明，如 `COMMENT='是否删除。0-否 1-是'`
+
+### 8. 引擎和字符集
+
+- **存储引擎**: 统一使用 `InnoDB`
+- **字符集**: 统一使用 `utf8mb4`
+- **排序规则**: 统一使用 `utf8mb4_general_ci`
+
+```sql
+ENGINE=InnoDB
+DEFAULT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_general_ci
+```
+
+### 9. 字段顺序规范
+
+表字段必须按照以下顺序排列（使用注释分组）：
+
+1. **主键**
+
+   ```sql
+   -- 主键
+   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+   ```
+
+2. **业务字段**
+
+   ```sql
+   -- 业务字段
+   `name` varchar(200) ... COMMENT '业务字段说明',
+   `description` varchar(500) ... COMMENT '业务字段说明',
+   ```
+
+3. **业务编号**
+
+   ```sql
+   -- 业务编号
+   `xxx_no` varchar(32) ... COMMENT '业务编号',
+   ```
+
+4. **状态字段**
+
+   ```sql
+   -- 状态字段
+   `is_preset` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否为预设。0-否 1-是',
+   `is_deleted` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否删除。0-否 1-是',
+   ```
+
+5. **审计字段**
+
+   ```sql
+   -- 审计字段
+   `create_by` varchar(32) ... COMMENT '创建人名字',
+   `create_by_email` varchar(128) ... COMMENT '创建人邮箱',
+   `create_time` datetime ... COMMENT '创建时间',
+   `update_by` varchar(32) ... COMMENT '更新人名字',
+   `update_by_email` varchar(128) ... COMMENT '更新人邮箱',
+   `update_time` datetime ... COMMENT '更新时间',
+   ```
+
+6. **扩展字段**
+
+   ```sql
+   -- 扩展字段
+   `remark` varchar(512) ... COMMENT '备注',
+   `attributes` json NULL COMMENT '扩展字段',
+   ```
+
+### 10. 组合索引规范
+
+根据实际查询需求创建组合索引，提高查询性能：
+
+#### 组合索引命名
+
+- 格式：`idx_字段1_字段2`
+- 示例：`idx_user_id_status`、`idx_task_template_id_status`
+
+#### 组合索引使用场景
+
+1. **多条件查询**
+
+   ```sql
+   -- 查询用户正在运行的任务
+   SELECT * FROM reward_task_executions 
+   WHERE user_id = ? AND status IN ('running', 'paused') AND is_deleted = 0;
+   
+   -- 需要组合索引
+   INDEX `idx_user_id_status` (`user_id`, `status`) USING BTREE
+   ```
+
+2. **排序查询**
+
+   ```sql
+   -- 按用户和时间排序查询
+   SELECT * FROM reward_task_executions 
+   WHERE user_id = ? AND is_deleted = 0 
+   ORDER BY start_time DESC;
+   
+   -- 可以考虑组合索引（如果经常使用）
+   INDEX `idx_user_id_start_time` (`user_id`, `start_time`) USING BTREE
+   ```
+
+#### 组合索引注意事项
+
+- **最左前缀原则**：组合索引 `(a, b, c)` 可以用于查询 `(a)`、`(a, b)`、`(a, b, c)`，但不能用于 `(b)`、`(c)`、`(b, c)`
+- **选择性高的字段在前**：将区分度高的字段放在前面
+- **避免过多组合索引**：组合索引会增加写入成本，根据实际查询频率创建
+
+#### 组合索引示例
+
+```sql
+-- 任务执行记录表：查询用户正在运行/暂停的任务
+INDEX `idx_user_id_status` (`user_id`, `status`) USING BTREE COMMENT '组合索引：查询用户正在运行/暂停的任务',
+
+-- 任务执行记录表：按用户和时间排序（如果经常使用）
+INDEX `idx_user_id_start_time` (`user_id`, `start_time`) USING BTREE COMMENT '组合索引：按用户和时间排序查询',
+```
+
+### 11. 最佳实践
+
+1. **字段顺序**: 严格按照规范顺序：主键 → 业务字段 → 业务编号 → 状态字段 → 审计字段 → 扩展字段
+2. **索引优化**:
+   - 根据实际查询需求创建索引
+   - 避免过多索引影响写入性能
+   - 优先创建单字段索引，必要时创建组合索引
+3. **字段长度**: 预留适当长度，避免频繁修改表结构
+4. **默认值**: 合理设置默认值，减少业务代码复杂度
+5. **时间字段**: 统一使用 `datetime` 类型，时间戳使用 `bigint`
+6. **注释分组**: 使用注释 `-- 主键`、`-- 业务字段` 等对字段进行分组，提高可读性
+7. **索引注释**: 为组合索引添加注释说明使用场景
