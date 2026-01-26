@@ -32,3 +32,9 @@ logging:
   level:
     root: INFO
     com.star.reward: DEBUG
+
+# JWT配置（与SSO服务保持一致）
+jwt:
+  secret: star-sso-jwt-secret-key-change-in-production
+  header: Authorization
+  prefix: Bearer 

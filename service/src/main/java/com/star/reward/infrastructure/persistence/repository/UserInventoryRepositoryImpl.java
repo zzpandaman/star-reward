@@ -5,7 +5,8 @@ import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import com.star.reward.infrastructure.persistence.converter.UserInventoryConverter;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardUserInventoryDO;
-import com.star.reward.infrastructure.persistence.dao.mapper.RewardUserInventoryMapper;
+import com.star.reward.infrastructure.persistence.dao.entity.RewardUserInventoryDOExample;
+import com.star.reward.infrastructure.persistence.dao.mapper.RewardUserInventoryDOMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -20,14 +21,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserInventoryRepositoryImpl implements UserInventoryRepository {
     
-    private final RewardUserInventoryMapper mapper;
+    private final RewardUserInventoryDOMapper mapper;
     private final UserInventoryConverter converter;
     
     @Override
     public Optional<UserInventoryBO> findByInventoryNo(String inventoryNo) {
-        RewardUserInventoryDO example = new RewardUserInventoryDO();
-        example.setInventoryNo(inventoryNo);
-        example.setIsDeleted((byte) 0);
+        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
+        example.createCriteria().andInventoryNoEqualTo(inventoryNo).andIsDeletedEqualTo((byte) 0);
         
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         if (list.isEmpty()) {
@@ -70,9 +70,8 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
     
     @Override
     public List<UserInventoryBO> findByBelongToId(Long belongToId) {
-        RewardUserInventoryDO example = new RewardUserInventoryDO();
-        example.setBelongToId(belongToId);
-        example.setIsDeleted((byte) 0);
+        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
+        example.createCriteria().andBelongToIdEqualTo(belongToId).andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -81,9 +80,8 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
     
     @Override
     public List<UserInventoryBO> findByInventoryType(InventoryType inventoryType) {
-        RewardUserInventoryDO example = new RewardUserInventoryDO();
-        example.setInventoryType(inventoryType.getCode());
-        example.setIsDeleted((byte) 0);
+        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
+        example.createCriteria().andInventoryTypeEqualTo(inventoryType.getCode()).andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -92,10 +90,11 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
     
     @Override
     public List<UserInventoryBO> findByBelongToIdAndType(Long belongToId, InventoryType inventoryType) {
-        RewardUserInventoryDO example = new RewardUserInventoryDO();
-        example.setBelongToId(belongToId);
-        example.setInventoryType(inventoryType.getCode());
-        example.setIsDeleted((byte) 0);
+        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
+        example.createCriteria()
+                .andBelongToIdEqualTo(belongToId)
+                .andInventoryTypeEqualTo(inventoryType.getCode())
+                .andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -104,9 +103,8 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
     
     @Override
     public List<UserInventoryBO> findByPublishById(Long publishById) {
-        RewardUserInventoryDO example = new RewardUserInventoryDO();
-        example.setPublishById(publishById);
-        example.setIsDeleted((byte) 0);
+        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
+        example.createCriteria().andPublishByIdEqualTo(publishById).andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)

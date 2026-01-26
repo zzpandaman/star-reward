@@ -5,6 +5,10 @@ import com.star.reward.infrastructure.persistence.dao.entity.RewardPurchaseRecor
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+
 /**
  * 购买记录转换器
  */
@@ -19,31 +23,17 @@ public class PurchaseRecordConverter {
             return null;
         }
         
-        return PurchaseRecordBO.builder()
-                .id(doEntity.getId())
-                .purchaseNo(doEntity.getPurchaseNo())
-                .productNo(doEntity.getProductNo())
-                .name(doEntity.getName())
-                .description(doEntity.getDescription())
-                .price(doEntity.getPrice())
-                .minQuantity(doEntity.getMinQuantity())
-                .minUnit(doEntity.getMinUnit())
-                .publishBy(doEntity.getPublishBy())
-                .publishById(doEntity.getPublishById())
-                .purchaseQuantity(doEntity.getPurchaseQuantity())
-                .purchaseBy(doEntity.getPurchaseBy())
-                .purchaseById(doEntity.getPurchaseById())
-                .isPreset(doEntity.getIsPreset() != null && doEntity.getIsPreset() == 1)
-                .isDeleted(doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1)
-                .createBy(doEntity.getCreateBy())
-                .createById(doEntity.getCreateById())
-                .createTime(doEntity.getCreateTime())
-                .updateBy(doEntity.getUpdateBy())
-                .updateById(doEntity.getUpdateById())
-                .updateTime(doEntity.getUpdateTime())
-                .remark(doEntity.getRemark())
-                .attributes(doEntity.getAttributes())
-                .build();
+        PurchaseRecordBO bo = new PurchaseRecordBO();
+        // 同名字段使用 BeanUtils 复制
+        BeanUtils.copyProperties(doEntity, bo);
+        
+        // 特殊字段手动处理
+        bo.setIsPreset(doEntity.getIsPreset() != null && doEntity.getIsPreset() == 1);
+        bo.setIsDeleted(doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1);
+        bo.setCreateTime(convertToLocalDateTime(doEntity.getCreateTime()));
+        bo.setUpdateTime(convertToLocalDateTime(doEntity.getUpdateTime()));
+        
+        return bo;
     }
     
     /**
@@ -61,7 +51,23 @@ public class PurchaseRecordConverter {
         // 特殊字段手动处理
         target.setIsPreset(source.getIsPreset() != null && source.getIsPreset() ? (byte) 1 : (byte) 0);
         target.setIsDeleted(source.getIsDeleted() != null && source.getIsDeleted() ? (byte) 1 : (byte) 0);
+        target.setCreateTime(convertToDate(source.getCreateTime()));
+        target.setUpdateTime(convertToDate(source.getUpdateTime()));
         
         return target;
+    }
+    
+    private LocalDateTime convertToLocalDateTime(Date date) {
+        if (date == null) {
+            return null;
+        }
+        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+    }
+    
+    private Date convertToDate(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            return null;
+        }
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 }

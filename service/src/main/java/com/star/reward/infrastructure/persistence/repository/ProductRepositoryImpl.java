@@ -4,7 +4,8 @@ import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.domain.product.repository.ProductRepository;
 import com.star.reward.infrastructure.persistence.converter.ProductConverter;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardProductDO;
-import com.star.reward.infrastructure.persistence.dao.mapper.RewardProductMapper;
+import com.star.reward.infrastructure.persistence.dao.mapper.RewardProductDOMapper;
+import com.star.reward.infrastructure.persistence.dao.entity.RewardProductDOExample;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -19,14 +20,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepository {
     
-    private final RewardProductMapper mapper;
+    private final RewardProductDOMapper mapper;
     private final ProductConverter converter;
     
     @Override
     public Optional<ProductBO> findByProductNo(String productNo) {
-        RewardProductDO example = new RewardProductDO();
-        example.setProductNo(productNo);
-        example.setIsDeleted((byte) 0);
+        RewardProductDOExample example = new RewardProductDOExample();
+        example.createCriteria().andProductNoEqualTo(productNo).andIsDeletedEqualTo((byte) 0);
         
         List<RewardProductDO> list = mapper.selectByExample(example);
         if (list.isEmpty()) {
@@ -69,8 +69,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     
     @Override
     public List<ProductBO> findAll() {
-        RewardProductDO example = new RewardProductDO();
-        example.setIsDeleted((byte) 0);
+        RewardProductDOExample example = new RewardProductDOExample();
+        example.createCriteria().andIsDeletedEqualTo((byte) 0);
         List<RewardProductDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -79,9 +79,10 @@ public class ProductRepositoryImpl implements ProductRepository {
     
     @Override
     public List<ProductBO> findByIsPreset(Boolean isPreset) {
-        RewardProductDO example = new RewardProductDO();
-        example.setIsPreset(isPreset != null && isPreset ? (byte) 1 : (byte) 0);
-        example.setIsDeleted((byte) 0);
+        RewardProductDOExample example = new RewardProductDOExample();
+        example.createCriteria()
+                .andIsPresetEqualTo(isPreset != null && isPreset ? (byte) 1 : (byte) 0)
+                .andIsDeletedEqualTo((byte) 0);
         List<RewardProductDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -90,9 +91,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     
     @Override
     public List<ProductBO> findByPublishById(Long publishById) {
-        RewardProductDO example = new RewardProductDO();
-        example.setPublishById(publishById);
-        example.setIsDeleted((byte) 0);
+        RewardProductDOExample example = new RewardProductDOExample();
+        example.createCriteria().andPublishByIdEqualTo(publishById).andIsDeletedEqualTo((byte) 0);
         List<RewardProductDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)

@@ -4,7 +4,8 @@ import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
 import com.star.reward.infrastructure.persistence.converter.TaskTemplateConverter;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskTemplateDO;
-import com.star.reward.infrastructure.persistence.dao.mapper.RewardTaskTemplateMapper;
+import com.star.reward.infrastructure.persistence.dao.mapper.RewardTaskTemplateDOMapper;
+import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskTemplateDOExample;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -19,14 +20,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
     
-    private final RewardTaskTemplateMapper mapper;
+    private final RewardTaskTemplateDOMapper mapper;
     private final TaskTemplateConverter converter;
     
     @Override
     public Optional<TaskTemplateBO> findByTemplateNo(String templateNo) {
-        RewardTaskTemplateDO example = new RewardTaskTemplateDO();
-        example.setTemplateNo(templateNo);
-        example.setIsDeleted((byte) 0);
+        RewardTaskTemplateDOExample example = new RewardTaskTemplateDOExample();
+        example.createCriteria().andTemplateNoEqualTo(templateNo).andIsDeletedEqualTo((byte) 0);
         
         List<RewardTaskTemplateDO> list = mapper.selectByExample(example);
         if (list.isEmpty()) {
@@ -69,8 +69,8 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
     
     @Override
     public List<TaskTemplateBO> findAll() {
-        RewardTaskTemplateDO example = new RewardTaskTemplateDO();
-        example.setIsDeleted((byte) 0);
+        RewardTaskTemplateDOExample example = new RewardTaskTemplateDOExample();
+        example.createCriteria().andIsDeletedEqualTo((byte) 0);
         List<RewardTaskTemplateDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -79,9 +79,10 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
     
     @Override
     public List<TaskTemplateBO> findByIsPreset(Boolean isPreset) {
-        RewardTaskTemplateDO example = new RewardTaskTemplateDO();
-        example.setIsPreset(isPreset != null && isPreset ? (byte) 1 : (byte) 0);
-        example.setIsDeleted((byte) 0);
+        RewardTaskTemplateDOExample example = new RewardTaskTemplateDOExample();
+        example.createCriteria()
+                .andIsPresetEqualTo(isPreset != null && isPreset ? (byte) 1 : (byte) 0)
+                .andIsDeletedEqualTo((byte) 0);
         List<RewardTaskTemplateDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)

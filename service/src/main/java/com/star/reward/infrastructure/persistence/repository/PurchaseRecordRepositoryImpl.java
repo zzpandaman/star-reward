@@ -4,7 +4,8 @@ import com.star.reward.domain.purchaserecord.model.entity.PurchaseRecordBO;
 import com.star.reward.domain.purchaserecord.repository.PurchaseRecordRepository;
 import com.star.reward.infrastructure.persistence.converter.PurchaseRecordConverter;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardPurchaseRecordDO;
-import com.star.reward.infrastructure.persistence.dao.mapper.RewardPurchaseRecordMapper;
+import com.star.reward.infrastructure.persistence.dao.entity.RewardPurchaseRecordDOExample;
+import com.star.reward.infrastructure.persistence.dao.mapper.RewardPurchaseRecordDOMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -19,14 +20,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
     
-    private final RewardPurchaseRecordMapper mapper;
+    private final RewardPurchaseRecordDOMapper mapper;
     private final PurchaseRecordConverter converter;
     
     @Override
     public Optional<PurchaseRecordBO> findByPurchaseNo(String purchaseNo) {
-        RewardPurchaseRecordDO example = new RewardPurchaseRecordDO();
-        example.setPurchaseNo(purchaseNo);
-        example.setIsDeleted((byte) 0);
+        RewardPurchaseRecordDOExample example = new RewardPurchaseRecordDOExample();
+        example.createCriteria().andPurchaseNoEqualTo(purchaseNo).andIsDeletedEqualTo((byte) 0);
         
         List<RewardPurchaseRecordDO> list = mapper.selectByExample(example);
         if (list.isEmpty()) {
@@ -69,9 +69,8 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
     
     @Override
     public List<PurchaseRecordBO> findByProductNo(String productNo) {
-        RewardPurchaseRecordDO example = new RewardPurchaseRecordDO();
-        example.setProductNo(productNo);
-        example.setIsDeleted((byte) 0);
+        RewardPurchaseRecordDOExample example = new RewardPurchaseRecordDOExample();
+        example.createCriteria().andProductNoEqualTo(productNo).andIsDeletedEqualTo((byte) 0);
         List<RewardPurchaseRecordDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -80,9 +79,8 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
     
     @Override
     public List<PurchaseRecordBO> findByPurchaseById(Long purchaseById) {
-        RewardPurchaseRecordDO example = new RewardPurchaseRecordDO();
-        example.setPurchaseById(purchaseById);
-        example.setIsDeleted((byte) 0);
+        RewardPurchaseRecordDOExample example = new RewardPurchaseRecordDOExample();
+        example.createCriteria().andPurchaseByIdEqualTo(purchaseById).andIsDeletedEqualTo((byte) 0);
         List<RewardPurchaseRecordDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -91,9 +89,8 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
     
     @Override
     public List<PurchaseRecordBO> findByPublishById(Long publishById) {
-        RewardPurchaseRecordDO example = new RewardPurchaseRecordDO();
-        example.setPublishById(publishById);
-        example.setIsDeleted((byte) 0);
+        RewardPurchaseRecordDOExample example = new RewardPurchaseRecordDOExample();
+        example.createCriteria().andPublishByIdEqualTo(publishById).andIsDeletedEqualTo((byte) 0);
         List<RewardPurchaseRecordDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)

@@ -5,7 +5,8 @@ import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
 import com.star.reward.domain.taskinstance.repository.TaskInstanceRepository;
 import com.star.reward.infrastructure.persistence.converter.TaskInstanceConverter;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskInstanceDO;
-import com.star.reward.infrastructure.persistence.dao.mapper.RewardTaskInstanceMapper;
+import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskInstanceDOExample;
+import com.star.reward.infrastructure.persistence.dao.mapper.RewardTaskInstanceDOMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -20,14 +21,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
     
-    private final RewardTaskInstanceMapper mapper;
+    private final RewardTaskInstanceDOMapper mapper;
     private final TaskInstanceConverter converter;
     
     @Override
     public Optional<TaskInstanceBO> findByInstanceNo(String instanceNo) {
-        RewardTaskInstanceDO example = new RewardTaskInstanceDO();
-        example.setInstanceNo(instanceNo);
-        example.setIsDeleted((byte) 0);
+        RewardTaskInstanceDOExample example = new RewardTaskInstanceDOExample();
+        example.createCriteria().andInstanceNoEqualTo(instanceNo).andIsDeletedEqualTo((byte) 0);
         
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         if (list.isEmpty()) {
@@ -70,9 +70,8 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
     
     @Override
     public List<TaskInstanceBO> findByTemplateNo(String templateNo) {
-        RewardTaskInstanceDO example = new RewardTaskInstanceDO();
-        example.setTemplateNo(templateNo);
-        example.setIsDeleted((byte) 0);
+        RewardTaskInstanceDOExample example = new RewardTaskInstanceDOExample();
+        example.createCriteria().andTemplateNoEqualTo(templateNo).andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -81,9 +80,8 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
     
     @Override
     public List<TaskInstanceBO> findByExecuteById(Long executeById) {
-        RewardTaskInstanceDO example = new RewardTaskInstanceDO();
-        example.setExecuteById(executeById);
-        example.setIsDeleted((byte) 0);
+        RewardTaskInstanceDOExample example = new RewardTaskInstanceDOExample();
+        example.createCriteria().andExecuteByIdEqualTo(executeById).andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -92,9 +90,8 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
     
     @Override
     public List<TaskInstanceBO> findByInstanceState(InstanceState instanceState) {
-        RewardTaskInstanceDO example = new RewardTaskInstanceDO();
-        example.setInstanceState(instanceState.getCode());
-        example.setIsDeleted((byte) 0);
+        RewardTaskInstanceDOExample example = new RewardTaskInstanceDOExample();
+        example.createCriteria().andInstanceStateEqualTo(instanceState.getCode()).andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)
@@ -103,10 +100,11 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
     
     @Override
     public List<TaskInstanceBO> findByExecuteByIdAndState(Long executeById, InstanceState instanceState) {
-        RewardTaskInstanceDO example = new RewardTaskInstanceDO();
-        example.setExecuteById(executeById);
-        example.setInstanceState(instanceState.getCode());
-        example.setIsDeleted((byte) 0);
+        RewardTaskInstanceDOExample example = new RewardTaskInstanceDOExample();
+        example.createCriteria()
+                .andExecuteByIdEqualTo(executeById)
+                .andInstanceStateEqualTo(instanceState.getCode())
+                .andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
                 .map(converter::toDomain)

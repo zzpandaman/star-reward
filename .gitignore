@@ -48,5 +48,5 @@ application-local.properties
 
 # Generated files
 **/generated/
-**/dao/**/*.java
-!**/dao/**/README.md
+# MyBatis Generator 生成的文件需要被 git 管理（虽然不要手动修改，但需要版本控制）
+# **/dao/**/*.java

@@ -33,17 +33,6 @@
         <!-- 使用自带序列化插件 -->
         <plugin type="org.mybatis.generator.plugins.SerializablePlugin" />
 
-        <plugin type="com.itfsw.mybatis.generator.plugins.LombokPlugin">
-            <property name="@Data" value="true" />
-            <property name="@Builder" value="true" />
-            <property name="@NoArgsConstructor" value="true" />
-            <property name="@AllArgsConstructor" value="true" />
-        </plugin>
-        <plugin type="com.itfsw.mybatis.generator.plugins.ModelColumnPlugin" />
-        <plugin type="com.itfsw.mybatis.generator.plugins.BatchInsertPlugin">
-            <property name="allowMultiQueries" value="false" />
-        </plugin>
-
         <commentGenerator>
             <property name="suppressDate" value="false" />
             <!-- 是否去除自动生成的注释 true：是 ： false:否 -->
