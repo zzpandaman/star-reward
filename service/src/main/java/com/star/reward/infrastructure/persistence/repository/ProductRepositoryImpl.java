@@ -23,9 +23,9 @@ public class ProductRepositoryImpl implements ProductRepository {
     private final ProductConverter converter;
     
     @Override
-    public Optional<ProductBO> findByProductBONo(String productNo) {
+    public Optional<ProductBO> findByProductNo(String productNo) {
         RewardProductDO example = new RewardProductDO();
-        example.setProductBONo(productNo);
+        example.setProductNo(productNo);
         example.setIsDeleted((byte) 0);
         
         List<RewardProductDO> list = mapper.selectByExample(example);
@@ -46,14 +46,14 @@ public class ProductRepositoryImpl implements ProductRepository {
     
     @Override
     public ProductBO save(ProductBO product) {
-        RewardProductDO doEntity = converter.toDO(product);
+        RewardProductDO doEntity = converter.ProductBO2DO(product);
         mapper.insertSelective(doEntity);
         return converter.toDomain(doEntity);
     }
     
     @Override
     public ProductBO update(ProductBO product) {
-        RewardProductDO doEntity = converter.toDO(product);
+        RewardProductDO doEntity = converter.ProductBO2DO(product);
         mapper.updateByPrimaryKeySelective(doEntity);
         return converter.toDomain(mapper.selectByPrimaryKey(product.getId()));
     }

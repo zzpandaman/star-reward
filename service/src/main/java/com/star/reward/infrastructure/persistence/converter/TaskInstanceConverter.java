@@ -4,6 +4,7 @@ import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
 import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
 import com.star.reward.domain.tasktemplate.model.valueobject.MinUnit;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskInstanceDO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -49,39 +50,23 @@ public class TaskInstanceConverter {
     }
     
     /**
-     * 领域实体转DO
+     * BO转DO（同名字段使用 BeanUtils 赋值）
      */
-    public RewardTaskInstanceDO toDO(TaskInstanceBO domain) {
-        if (domain == null) {
+    public RewardTaskInstanceDO TaskInstanceBO2DO(TaskInstanceBO source) {
+        if (source == null) {
             return null;
         }
         
-        RewardTaskInstanceDO doEntity = new RewardTaskInstanceDO();
-        doEntity.setId(domain.getId());
-        doEntity.setInstanceNo(domain.getInstanceNo());
-        doEntity.setTemplateNo(domain.getTemplateNo());
-        doEntity.setName(domain.getName());
-        doEntity.setDescription(domain.getDescription());
-        doEntity.setMinUnitPoint(domain.getMinUnitPoint());
-        doEntity.setMinUnit(domain.getMinUnit() != null ? domain.getMinUnit().getCode() : null);
-        doEntity.setPublishBy(domain.getPublishBy());
-        doEntity.setPublishById(domain.getPublishById());
-        doEntity.setStartTime(domain.getStartTime());
-        doEntity.setEndTime(domain.getEndTime());
-        doEntity.setInstanceState(domain.getInstanceState() != null ? domain.getInstanceState().getCode() : null);
-        doEntity.setExecuteBy(domain.getExecuteBy());
-        doEntity.setExecuteById(domain.getExecuteById());
-        doEntity.setIsPreset(domain.getIsPreset() != null && domain.getIsPreset() ? (byte) 1 : (byte) 0);
-        doEntity.setIsDeleted(domain.getIsDeleted() != null && domain.getIsDeleted() ? (byte) 1 : (byte) 0);
-        doEntity.setCreateBy(domain.getCreateBy());
-        doEntity.setCreateById(domain.getCreateById());
-        doEntity.setCreateTime(domain.getCreateTime());
-        doEntity.setUpdateBy(domain.getUpdateBy());
-        doEntity.setUpdateById(domain.getUpdateById());
-        doEntity.setUpdateTime(domain.getUpdateTime());
-        doEntity.setRemark(domain.getRemark());
-        doEntity.setAttributes(domain.getAttributes());
+        RewardTaskInstanceDO target = new RewardTaskInstanceDO();
+        // 同名字段使用 BeanUtils 复制
+        BeanUtils.copyProperties(source, target);
         
-        return doEntity;
+        // 特殊字段手动处理
+        target.setMinUnit(source.getMinUnit() != null ? source.getMinUnit().getCode() : null);
+        target.setInstanceState(source.getInstanceState() != null ? source.getInstanceState().getCode() : null);
+        target.setIsPreset(source.getIsPreset() != null && source.getIsPreset() ? (byte) 1 : (byte) 0);
+        target.setIsDeleted(source.getIsDeleted() != null && source.getIsDeleted() ? (byte) 1 : (byte) 0);
+        
+        return target;
     }
 }

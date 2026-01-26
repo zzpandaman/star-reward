@@ -46,14 +46,14 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
     
     @Override
     public PurchaseRecordBO save(PurchaseRecordBO purchaseRecord) {
-        RewardPurchaseRecordDO doEntity = converter.toDO(purchaseRecord);
+        RewardPurchaseRecordDO doEntity = converter.PurchaseRecordBO2DO(purchaseRecord);
         mapper.insertSelective(doEntity);
         return converter.toDomain(doEntity);
     }
     
     @Override
     public PurchaseRecordBO update(PurchaseRecordBO purchaseRecord) {
-        RewardPurchaseRecordDO doEntity = converter.toDO(purchaseRecord);
+        RewardPurchaseRecordDO doEntity = converter.PurchaseRecordBO2DO(purchaseRecord);
         mapper.updateByPrimaryKeySelective(doEntity);
         return converter.toDomain(mapper.selectByPrimaryKey(purchaseRecord.getId()));
     }

@@ -3,6 +3,7 @@ package com.star.reward.infrastructure.persistence.converter;
 import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardUserInventoryDO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,35 +45,21 @@ public class UserInventoryConverter {
     }
     
     /**
-     * 领域实体转DO
+     * BO转DO（同名字段使用 BeanUtils 赋值）
      */
-    public RewardUserInventoryDO toDO(UserInventoryBO domain) {
-        if (domain == null) {
+    public RewardUserInventoryDO UserInventoryBO2DO(UserInventoryBO source) {
+        if (source == null) {
             return null;
         }
         
-        RewardUserInventoryDO doEntity = new RewardUserInventoryDO();
-        doEntity.setId(domain.getId());
-        doEntity.setInventoryNo(domain.getInventoryNo());
-        doEntity.setInventoryType(domain.getInventoryType() != null ? domain.getInventoryType().getCode() : null);
-        doEntity.setName(domain.getName());
-        doEntity.setDescription(domain.getDescription());
-        doEntity.setQuantity(domain.getQuantity());
-        doEntity.setUnit(domain.getUnit());
-        doEntity.setPublishBy(domain.getPublishBy());
-        doEntity.setPublishById(domain.getPublishById());
-        doEntity.setBelongTo(domain.getBelongTo());
-        doEntity.setBelongToId(domain.getBelongToId());
-        doEntity.setIsDeleted(domain.getIsDeleted() != null && domain.getIsDeleted() ? (byte) 1 : (byte) 0);
-        doEntity.setCreateBy(domain.getCreateBy());
-        doEntity.setCreateById(domain.getCreateById());
-        doEntity.setCreateTime(domain.getCreateTime());
-        doEntity.setUpdateBy(domain.getUpdateBy());
-        doEntity.setUpdateById(domain.getUpdateById());
-        doEntity.setUpdateTime(domain.getUpdateTime());
-        doEntity.setRemark(domain.getRemark());
-        doEntity.setAttributes(domain.getAttributes());
+        RewardUserInventoryDO target = new RewardUserInventoryDO();
+        // 同名字段使用 BeanUtils 复制
+        BeanUtils.copyProperties(source, target);
         
-        return doEntity;
+        // 特殊字段手动处理
+        target.setInventoryType(source.getInventoryType() != null ? source.getInventoryType().getCode() : null);
+        target.setIsDeleted(source.getIsDeleted() != null && source.getIsDeleted() ? (byte) 1 : (byte) 0);
+        
+        return target;
     }
 }

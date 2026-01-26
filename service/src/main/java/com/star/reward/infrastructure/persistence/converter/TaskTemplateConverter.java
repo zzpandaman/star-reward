@@ -3,6 +3,7 @@ package com.star.reward.infrastructure.persistence.converter;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.model.valueobject.MinUnit;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskTemplateDO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -42,33 +43,22 @@ public class TaskTemplateConverter {
     }
     
     /**
-     * 领域实体转DO
+     * BO转DO（同名字段使用 BeanUtils 赋值）
      */
-    public RewardTaskTemplateDO toDO(TaskTemplateBO domain) {
-        if (domain == null) {
+    public RewardTaskTemplateDO TaskTemplateBO2DO(TaskTemplateBO source) {
+        if (source == null) {
             return null;
         }
         
-        RewardTaskTemplateDO doEntity = new RewardTaskTemplateDO();
-        doEntity.setId(domain.getId());
-        doEntity.setTemplateNo(domain.getTemplateNo());
-        doEntity.setName(domain.getName());
-        doEntity.setDescription(domain.getDescription());
-        doEntity.setMinUnitPoint(domain.getMinUnitPoint());
-        doEntity.setMinUnit(domain.getMinUnit() != null ? domain.getMinUnit().getCode() : null);
-        doEntity.setPublishBy(domain.getPublishBy());
-        doEntity.setPublishById(domain.getPublishById());
-        doEntity.setIsPreset(domain.getIsPreset() != null && domain.getIsPreset() ? (byte) 1 : (byte) 0);
-        doEntity.setIsDeleted(domain.getIsDeleted() != null && domain.getIsDeleted() ? (byte) 1 : (byte) 0);
-        doEntity.setCreateBy(domain.getCreateBy());
-        doEntity.setCreateById(domain.getCreateById());
-        doEntity.setCreateTime(domain.getCreateTime());
-        doEntity.setUpdateBy(domain.getUpdateBy());
-        doEntity.setUpdateById(domain.getUpdateById());
-        doEntity.setUpdateTime(domain.getUpdateTime());
-        doEntity.setRemark(domain.getRemark());
-        doEntity.setAttributes(domain.getAttributes());
+        RewardTaskTemplateDO target = new RewardTaskTemplateDO();
+        // 同名字段使用 BeanUtils 复制
+        BeanUtils.copyProperties(source, target);
         
-        return doEntity;
+        // 特殊字段手动处理
+        target.setMinUnit(source.getMinUnit() != null ? source.getMinUnit().getCode() : null);
+        target.setIsPreset(source.getIsPreset() != null && source.getIsPreset() ? (byte) 1 : (byte) 0);
+        target.setIsDeleted(source.getIsDeleted() != null && source.getIsDeleted() ? (byte) 1 : (byte) 0);
+        
+        return target;
     }
 }

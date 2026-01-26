@@ -46,14 +46,14 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
     
     @Override
     public TaskTemplateBO save(TaskTemplateBO taskTemplate) {
-        RewardTaskTemplateDO doEntity = converter.toDO(taskTemplate);
+        RewardTaskTemplateDO doEntity = converter.TaskTemplateBO2DO(taskTemplate);
         mapper.insertSelective(doEntity);
         return converter.toDomain(doEntity);
     }
     
     @Override
     public TaskTemplateBO update(TaskTemplateBO taskTemplate) {
-        RewardTaskTemplateDO doEntity = converter.toDO(taskTemplate);
+        RewardTaskTemplateDO doEntity = converter.TaskTemplateBO2DO(taskTemplate);
         mapper.updateByPrimaryKeySelective(doEntity);
         return converter.toDomain(mapper.selectByPrimaryKey(taskTemplate.getId()));
     }

@@ -165,28 +165,66 @@ alwaysApply: true
 ```java
 @Component
 public class XxxConverter {
-    // DO <-> Domain Model
-    public Xxx toDomain(XxxDO do);
-    public XxxDO toDO(Xxx domain);
+    // DO -> BO
+    public XxxBO toDomain(XxxDO do);
     
-    // Request DTO -> Domain Model
-    public Xxx toDomain(CreateXxxRequest request);
+    // BO -> DO（使用 BeanUtils 处理同名字段）
+    public XxxDO XxxBO2DO(XxxBO source);
     
-    // Domain Model -> Response DTO
-    public XxxResponse toResponse(Xxx domain);
+    // Request DTO -> BO
+    public XxxBO toDomain(CreateXxxRequest request);
     
-    // Import/Export DTO <-> Domain Model
-    public Xxx toDomain(XxxImportDTO importDTO);
-    public XxxExportDTO toExportDTO(Xxx domain);
+    // BO -> Response DTO
+    public XxxResponse toResponse(XxxBO domain);
+    
+    // Import/Export DTO <-> BO
+    public XxxBO toDomain(XxxImportDTO importDTO);
+    public XxxExportDTO toExportDTO(XxxBO domain);
 }
 ```
 
 **转换规则**：
 
-- 所有转换方法必须处理 null 值，返回 null
-- 转换方法命名使用 `to` 前缀（如 `toDomain`、`toDO`、`toResponse`）
-- 转换器使用 `@Component` 注解，由 Spring 管理
-- 不要在应用层或接口层创建独立的 Mapper 类，统一使用 Converter
+1. **方法命名规范**：
+   - DO -> BO: `toDomain(XxxDO do)`
+   - BO -> DO: `XxxBO2DO(XxxBO source)`（使用 BO2DO 命名模式）
+   - 其他转换: `toXxx` 前缀（如 `toResponse`、`toDomain`）
+
+2. **同名字段处理**：
+   - BO 转 DO 时，**同名字段必须使用 BeanUtils 赋值**
+   - 不同名字段或需要特殊处理的字段，手动赋值
+   - 示例：
+   ```java
+   public RewardTaskTemplateDO TaskTemplateBO2DO(TaskTemplateBO source) {
+       if (source == null) {
+           return null;
+       }
+       
+       RewardTaskTemplateDO target = new RewardTaskTemplateDO();
+       // 同名字段使用 BeanUtils 复制
+       BeanUtils.copyProperties(source, target);
+       
+       // 特殊字段手动处理
+       target.setMinUnit(source.getMinUnit() != null ? source.getMinUnit().getCode() : null);
+       target.setIsPreset(source.getIsPreset() != null && source.getIsPreset() ? (byte) 1 : (byte) 0);
+       target.setIsDeleted(source.getIsDeleted() != null && source.getIsDeleted() ? (byte) 1 : (byte) 0);
+       
+       return target;
+   }
+   ```
+
+3. **空值处理**：
+   - 所有转换方法必须处理 null 值，返回 null
+   - 在方法开始处进行 null 检查
+
+4. **类型转换**：
+   - 枚举类型：DO 中存储 String，BO 中使用枚举，转换时使用 `fromCode()` 和 `getCode()`
+   - Boolean 转 Byte：`isPreset`、`isDeleted` 等字段需要 Boolean 与 Byte 互转
+
+5. **其他规则**：
+   - 转换器使用 `@Component` 注解，由 Spring 管理
+   - 不要在应用层或接口层创建独立的 Mapper 类，统一使用 Converter
+   - 使用 Spring 的 `BeanUtils.copyProperties()` 进行同名字段复制
 
 ## 命名规范
 

@@ -2,6 +2,7 @@ package com.star.reward.infrastructure.persistence.converter;
 
 import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardProductDO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,7 +21,7 @@ public class ProductConverter {
         
         return ProductBO.builder()
                 .id(doEntity.getId())
-                .productNo(doEntity.getProductBONo())
+                .productNo(doEntity.getProductNo())
                 .name(doEntity.getName())
                 .description(doEntity.getDescription())
                 .price(doEntity.getPrice())
@@ -42,34 +43,21 @@ public class ProductConverter {
     }
     
     /**
-     * 领域实体转DO
+     * BO转DO（同名字段使用 BeanUtils 赋值）
      */
-    public RewardProductDO toDO(ProductBO domain) {
-        if (domain == null) {
+    public RewardProductDO ProductBO2DO(ProductBO source) {
+        if (source == null) {
             return null;
         }
         
-        RewardProductDO doEntity = new RewardProductDO();
-        doEntity.setId(domain.getId());
-        doEntity.setProductBONo(domain.getProductBONo());
-        doEntity.setName(domain.getName());
-        doEntity.setDescription(domain.getDescription());
-        doEntity.setPrice(domain.getPrice());
-        doEntity.setMinQuantity(domain.getMinQuantity());
-        doEntity.setMinUnit(domain.getMinUnit());
-        doEntity.setPublishBy(domain.getPublishBy());
-        doEntity.setPublishById(domain.getPublishById());
-        doEntity.setIsPreset(domain.getIsPreset() != null && domain.getIsPreset() ? (byte) 1 : (byte) 0);
-        doEntity.setIsDeleted(domain.getIsDeleted() != null && domain.getIsDeleted() ? (byte) 1 : (byte) 0);
-        doEntity.setCreateBy(domain.getCreateBy());
-        doEntity.setCreateById(domain.getCreateById());
-        doEntity.setCreateTime(domain.getCreateTime());
-        doEntity.setUpdateBy(domain.getUpdateBy());
-        doEntity.setUpdateById(domain.getUpdateById());
-        doEntity.setUpdateTime(domain.getUpdateTime());
-        doEntity.setRemark(domain.getRemark());
-        doEntity.setAttributes(domain.getAttributes());
+        RewardProductDO target = new RewardProductDO();
+        // 同名字段使用 BeanUtils 复制
+        BeanUtils.copyProperties(source, target);
         
-        return doEntity;
+        // 特殊字段手动处理
+        target.setIsPreset(source.getIsPreset() != null && source.getIsPreset() ? (byte) 1 : (byte) 0);
+        target.setIsDeleted(source.getIsDeleted() != null && source.getIsDeleted() ? (byte) 1 : (byte) 0);
+        
+        return target;
     }
 }

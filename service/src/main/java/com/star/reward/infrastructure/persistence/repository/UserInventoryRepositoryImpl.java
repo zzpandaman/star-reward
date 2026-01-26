@@ -47,14 +47,14 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
     
     @Override
     public UserInventoryBO save(UserInventoryBO userInventory) {
-        RewardUserInventoryDO doEntity = converter.toDO(userInventory);
+        RewardUserInventoryDO doEntity = converter.UserInventoryBO2DO(userInventory);
         mapper.insertSelective(doEntity);
         return converter.toDomain(doEntity);
     }
     
     @Override
     public UserInventoryBO update(UserInventoryBO userInventory) {
-        RewardUserInventoryDO doEntity = converter.toDO(userInventory);
+        RewardUserInventoryDO doEntity = converter.UserInventoryBO2DO(userInventory);
         mapper.updateByPrimaryKeySelective(doEntity);
         return converter.toDomain(mapper.selectByPrimaryKey(userInventory.getId()));
     }

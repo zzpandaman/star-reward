@@ -47,14 +47,14 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
     
     @Override
     public TaskInstanceBO save(TaskInstanceBO taskInstance) {
-        RewardTaskInstanceDO doEntity = converter.toDO(taskInstance);
+        RewardTaskInstanceDO doEntity = converter.TaskInstanceBO2DO(taskInstance);
         mapper.insertSelective(doEntity);
         return converter.toDomain(doEntity);
     }
     
     @Override
     public TaskInstanceBO update(TaskInstanceBO taskInstance) {
-        RewardTaskInstanceDO doEntity = converter.toDO(taskInstance);
+        RewardTaskInstanceDO doEntity = converter.TaskInstanceBO2DO(taskInstance);
         mapper.updateByPrimaryKeySelective(doEntity);
         return converter.toDomain(mapper.selectByPrimaryKey(taskInstance.getId()));
     }
