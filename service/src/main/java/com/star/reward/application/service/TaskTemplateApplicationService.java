@@ -68,6 +68,9 @@ public class TaskTemplateApplicationService {
                 .createBy(user.getUserNo())
                 .createById(user.getUserId())
                 .createTime(LocalDateTime.now())
+                .updateBy(user.getUserNo())
+                .updateById(user.getUserId())
+                .updateTime(LocalDateTime.now())
                 .build();
         
         TaskTemplateBO saved = taskTemplateRepository.save(template);

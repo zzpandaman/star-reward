@@ -9,6 +9,83 @@ alwaysApply: true
 
 部署脚本位于 `/Users/cdmac14013/docker/star-deploy/`
 
+## 操作命令
+
+### 后端服务管理
+
+```bash
+cd /Users/cdmac14013/docker/star-deploy/backend
+
+# 一键构建部署
+./deploy-backend.sh deploy local
+
+# 仅重启（不重新构建）
+./deploy-backend.sh restart local
+
+# 停止所有后端服务
+./deploy-backend.sh stop
+
+# 查看日志（实时跟踪）
+./deploy-backend.sh logs star-reward
+./deploy-backend.sh logs star-sso
+
+# 查看服务状态
+./deploy-backend.sh status
+```
+
+### 前端服务管理
+
+```bash
+cd /Users/cdmac14013/docker/star-deploy/frontend
+
+# 构建并部署
+./deploy-frontend.sh deploy
+
+# 仅同步（已构建过，不重新 npm build）
+./deploy-frontend.sh sync
+
+# 清理部署目录
+./deploy-frontend.sh clean
+```
+
+### Nginx 管理
+
+```bash
+cd /Users/cdmac14013/docker/star-deploy
+
+# 启动 nginx
+docker-compose --env-file .env.local up -d
+
+# 停止 nginx
+docker-compose down
+
+# 重载配置（不停服）
+docker exec star-nginx nginx -s reload
+
+# 查看日志
+docker logs -f star-nginx
+```
+
+### 一键全部部署
+
+```bash
+cd /Users/cdmac14013/docker/star-deploy
+./deploy-all.sh local   # 本地环境
+./deploy-all.sh prod    # 生产环境
+```
+
+## 健康检查
+
+```bash
+# 各服务健康检查
+curl http://localhost/api/sso/health     # SSO 服务
+curl http://localhost/api/reward/health  # Reward 服务
+curl http://localhost/health             # Nginx 本身
+
+# 前端页面
+curl -I http://localhost/star/
+```
+
 ## 环境配置
 
 - `application-docker.yml` - Docker 环境专用配置
@@ -23,17 +100,146 @@ mvn clean package spring-boot:repackage -DskipTests
 
 生成的可执行 JAR 位于 `service/target/service-*.jar`
 
-## SSO 服务调用
-
-通过环境变量配置 SSO 服务地址：
-
-```yaml
-sso:
-  service:
-    url: ${SSO_SERVICE_URL:http://localhost:8081}
-```
-
 ## 日志配置
 
 - logback-spring.xml 配置按环境输出
 - Docker 环境日志输出到 `/app/logs`，挂载到宿主机
+
+---
+
+## 服务器一键部署
+
+### 一、环境准备
+
+```bash
+# 1.1 安装 Docker
+# CentOS
+yum install -y yum-utils
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install -y docker-ce docker-ce-cli containerd.io
+systemctl enable docker && systemctl start docker
+
+# Ubuntu
+apt update && apt install -y docker.io docker-compose
+systemctl enable docker && systemctl start docker
+
+# 1.2 安装 Docker Compose
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+  -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# 1.3 安装 JDK 17 和 Maven
+yum install -y java-17-openjdk maven  # CentOS
+apt install -y openjdk-17-jdk maven   # Ubuntu
+
+# 1.4 安装 Node.js（前端构建用，可选）
+curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+yum install -y nodejs
+```
+
+### 二、目录规划
+
+```bash
+# 创建目录
+mkdir -p /data/code /opt/star-deploy /var/log/star /opt/maven/repository
+
+# 目录说明
+CODE_DIR=/data/code              # 代码目录
+DEPLOY_DIR=/opt/star-deploy      # 部署脚本和配置
+LOG_DIR=/var/log/star            # 日志目录
+MAVEN_REPO=/opt/maven/repository # Maven 本地仓库
+```
+
+### 三、配置修改
+
+```bash
+# 3.1 复制部署目录到服务器
+scp -r /Users/cdmac14013/docker/star-deploy user@server:/opt/
+
+# 3.2 编辑路径配置
+vim /opt/star-deploy/backend/paths.conf
+# 修改为：
+# CODE_DIR=/data/code
+# MAVEN_REPO=/opt/maven/repository
+# DEPLOY_DIR=/opt/star-deploy
+# LOG_DIR=/var/log/star
+
+# 3.3 编辑生产环境变量
+vim /opt/star-deploy/backend/.env.prod
+# 配置：
+# DB_URL=jdbc:mysql://<host>:3306/star_core?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+# DB_USER=<用户名>
+# DB_PASS=<密码>
+# JWT_SECRET=<生产密钥>
+# SSO_SERVICE_URL=http://star-sso:8081
+```
+
+### 四、代码同步
+
+```bash
+# 方式一：Git clone
+cd /data/code
+git clone <repo>/star-common.git
+git clone <repo>/star-sso.git
+git clone <repo>/star-reward.git
+git clone <repo>/study-reward-app.git
+
+# 方式二：本地构建后上传 JAR（无需服务器安装 Maven）
+# 本地执行
+cd star-sso/service && mvn clean package spring-boot:repackage -DskipTests
+scp target/service-*.jar user@server:/opt/star-deploy/backend/apps/star-sso/app.jar
+
+cd star-reward/service && mvn clean package spring-boot:repackage -DskipTests
+scp target/service-*.jar user@server:/opt/star-deploy/backend/apps/star-reward/app.jar
+
+# 前端
+cd study-reward-app && npm run build
+scp -r dist/* user@server:/opt/star-deploy/nginx/html/star/
+```
+
+### 五、执行部署
+
+```bash
+# 5.1 一键部署
+cd /opt/star-deploy
+./deploy-all.sh prod
+
+# 5.2 分步部署
+# 后端
+cd /opt/star-deploy/backend
+./deploy-backend.sh deploy prod
+
+# 前端
+cd /opt/star-deploy/frontend
+./deploy-frontend.sh deploy
+
+# Nginx
+cd /opt/star-deploy
+docker-compose --env-file .env.prod up -d
+```
+
+### 六、验证与运维
+
+```bash
+# 6.1 状态检查
+cd /opt/star-deploy/backend
+./deploy-backend.sh status
+
+# 6.2 健康检查
+curl http://localhost/api/sso/health
+curl http://localhost/api/reward/health
+curl http://localhost/health
+
+# 6.3 日志查看
+./deploy-backend.sh logs star-reward
+./deploy-backend.sh logs star-sso
+docker logs -f star-nginx
+
+# 6.4 独立重启
+./deploy-backend.sh restart prod        # 重启后端
+docker exec star-nginx nginx -s reload  # 重载 nginx
+
+# 6.5 前端更新
+cd /opt/star-deploy/frontend
+./deploy-frontend.sh deploy
+```

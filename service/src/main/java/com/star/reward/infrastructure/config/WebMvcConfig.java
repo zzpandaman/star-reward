@@ -28,6 +28,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/api/sso/login",
+                        "/api/reward/health",
                         "/actuator/**",
                         "/error"
                 );
