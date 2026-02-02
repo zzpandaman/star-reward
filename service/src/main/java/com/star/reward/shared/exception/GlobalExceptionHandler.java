@@ -1,7 +1,8 @@
 package com.star.reward.shared.exception;
 
-import com.star.reward.shared.result.Result;
-import com.star.reward.shared.result.ResultCode;
+import com.star.common.exception.BusinessException;
+import com.star.common.result.Result;
+import com.star.common.result.ResultCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;

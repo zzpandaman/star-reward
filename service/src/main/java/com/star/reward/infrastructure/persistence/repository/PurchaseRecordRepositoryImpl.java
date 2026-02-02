@@ -96,4 +96,11 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
                 .map(converter::toDomain)
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    public boolean existsByProductNo(String productNo) {
+        RewardPurchaseRecordDOExample example = new RewardPurchaseRecordDOExample();
+        example.createCriteria().andProductNoEqualTo(productNo).andIsDeletedEqualTo((byte) 0);
+        return mapper.countByExample(example) > 0;
+    }
 }

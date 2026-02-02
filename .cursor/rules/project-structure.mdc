@@ -1,0 +1,89 @@
+---
+description: star-reward 项目结构与 DDD 分层规范
+alwaysApply: true
+---
+
+# star-reward 项目结构
+
+## 模块结构
+
+```
+star-reward/
+├── api-client/     # Feign API 二方包
+└── service/        # 主服务模块（DDD 分层）
+```
+
+## DDD 分层架构
+
+### Domain（领域层）
+
+路径: `domain/{aggregate}/`
+
+- `model/entity/` - 领域实体 BO
+- `model/valueobject/` - 值对象
+- `service/` - 领域服务
+- `repository/` - 仓储接口（仅定义）
+
+### Application（应用层）
+
+路径: `application/service/`
+
+- 用例编排、事务管理
+- 调用 Domain Service 和 Repository
+
+### Infrastructure（基础设施层）
+
+路径: `infrastructure/`
+
+- `persistence/dao/` - MyBatis DAO
+- `persistence/repository/` - 仓储实现
+- `persistence/converter/` - DO ↔ BO 转换
+- `external/feign/` - 外部服务调用
+- `config/` - Spring 配置
+
+### Interfaces（接口层）
+
+路径: `interfaces/`
+
+- `rest/controller/` - REST 控制器
+- `rest/dto/` - 请求/响应 DTO
+- `feign/impl/` - Feign 接口实现
+
+### Shared（共享层）
+
+路径: `shared/`
+
+- `exception/` - 全局异常处理
+- `interceptor/` - 拦截器（JwtAuthInterceptor）
+- `filter/` - 过滤器
+- `context/` - 上下文（CurrentUserContext）
+
+## 请求数据流
+
+```
+HTTP Request
+    ↓
+LoggingFilter
+    ↓
+JwtAuthInterceptor → CurrentUserContext (ThreadLocal)
+    ↓
+Controller
+    ↓
+ApplicationService (@Transactional)
+    ↓
+DomainService / Repository
+    ↓
+Infrastructure (MyBatis → DB)
+    ↓
+Result<T> 响应
+    ↓
+GlobalExceptionHandler (异常处理)
+```
+
+## 依赖规则
+
+- Domain 层不依赖其他层
+- Application 层依赖 Domain 层
+- Infrastructure 层实现 Domain 层接口
+- Interfaces 层依赖 Application 层
+- Shared 层可被所有层使用

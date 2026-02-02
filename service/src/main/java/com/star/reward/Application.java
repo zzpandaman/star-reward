@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * 应用启动类
  */
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.star.reward.infrastructure.external.feign.client")
+@EnableFeignClients(basePackages = {"com.star.reward.infrastructure.external.feign.client", "com.star.sso.api"})
 @MapperScan("com.star.reward.infrastructure.persistence.dao.mapper")
 @EnableScheduling
 public class Application {

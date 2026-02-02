@@ -49,4 +49,9 @@ public interface PurchaseRecordRepository {
      * 根据发布人ID查询
      */
     List<PurchaseRecordBO> findByPublishById(Long publishById);
+    
+    /**
+     * 检查商品是否有购买记录
+     */
+    boolean existsByProductNo(String productNo);
 }

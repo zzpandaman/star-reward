@@ -24,6 +24,20 @@
             <artifactId>api-client</artifactId>
         </dependency>
 
+        <!-- star-common-core -->
+        <dependency>
+            <groupId>com.star.common</groupId>
+            <artifactId>star-common-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- star-sso api-client -->
+        <dependency>
+            <groupId>com.star.sso</groupId>
+            <artifactId>api-client</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
         <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

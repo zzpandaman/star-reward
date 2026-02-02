@@ -1,7 +1,8 @@
 package com.star.reward.interfaces.rest.controller;
 
+import com.star.common.result.Result;
+import com.star.common.result.ResultCode;
 import com.star.reward.shared.context.CurrentUserContext;
-import com.star.reward.shared.result.Result;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,8 +27,7 @@ public class CurrentUserController {
     public Result<CurrentUserInfo> getCurrentUser() {
         CurrentUserContext context = CurrentUserContext.get();
         if (context == null) {
-            return Result.fail(com.star.reward.shared.result.ResultCode.UNAUTHORIZED.getCode(), 
-                    com.star.reward.shared.result.ResultCode.UNAUTHORIZED.getMessage());
+            return Result.fail(ResultCode.UNAUTHORIZED);
         }
         
         CurrentUserInfo userInfo = CurrentUserInfo.builder()

@@ -1,0 +1,80 @@
+---
+description: star 微服务体系联动规范
+alwaysApply: true
+---
+
+# 微服务体系联动
+
+## 项目关系
+
+```
+star-common-core (公共组件)
+       ↑
+   ┌───┴───┐
+   │       │
+star-sso  star-reward
+ (认证)    (业务)
+   │
+   └─→ star-sso-api-client (Feign 二方包)
+              ↑
+              │
+        star-reward (依赖)
+```
+
+## 依赖配置
+
+```xml
+<!-- star-common-core -->
+<dependency>
+    <groupId>com.star.common</groupId>
+    <artifactId>star-common-core</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</dependency>
+
+<!-- star-sso api-client -->
+<dependency>
+    <groupId>com.star.sso</groupId>
+    <artifactId>api-client</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</dependency>
+```
+
+## 公共组件使用
+
+从 `com.star.common` 引入：
+
+- `Result<T>` - 统一响应
+- `ResultCode` - 响应码枚举
+- `BusinessException` - 业务异常
+- `PageRequest` / `PageResponse<T>` - 分页
+
+```java
+// ✅ 正确
+import com.star.common.result.Result;
+import com.star.common.exception.BusinessException;
+
+// ❌ 错误：不要在本项目重复定义
+```
+
+## SSO 集成
+
+### Feign 扫描配置
+
+```java
+@EnableFeignClients(basePackages = {
+    "com.star.reward.infrastructure.external.feign.client",
+    "com.star.sso.api"
+})
+```
+
+### Token 验证流程
+
+1. 请求携带 `Authorization: Bearer <token>`
+2. `JwtAuthInterceptor` 本地验证 JWT
+3. 解析用户信息存入 `CurrentUserContext`
+4. 业务代码通过 `CurrentUserContext.get()` 获取当前用户
+
+### SsoFeignApi 接口
+
+- `validateToken()` - 验证 Token（可选远程验证）
+- `getUserInfo()` - 获取用户详细信息

@@ -1,8 +1,8 @@
 package com.star.reward.shared.interceptor;
 
+import com.star.common.result.Result;
+import com.star.common.result.ResultCode;
 import com.star.reward.shared.context.CurrentUserContext;
-import com.star.reward.shared.result.Result;
-import com.star.reward.shared.result.ResultCode;
 import com.alibaba.fastjson2.JSON;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
