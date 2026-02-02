@@ -1,0 +1,39 @@
+---
+description: Docker 部署配置规范
+alwaysApply: true
+---
+
+# Docker 部署配置
+
+## 部署位置
+
+部署脚本位于 `/Users/cdmac14013/docker/star-deploy/`
+
+## 环境配置
+
+- `application-docker.yml` - Docker 环境专用配置
+- 数据库/JWT/SSO URL 通过环境变量注入
+
+## 打包要求
+
+```bash
+cd service
+mvn clean package spring-boot:repackage -DskipTests
+```
+
+生成的可执行 JAR 位于 `service/target/service-*.jar`
+
+## SSO 服务调用
+
+通过环境变量配置 SSO 服务地址：
+
+```yaml
+sso:
+  service:
+    url: ${SSO_SERVICE_URL:http://localhost:8081}
+```
+
+## 日志配置
+
+- logback-spring.xml 配置按环境输出
+- Docker 环境日志输出到 `/app/logs`，挂载到宿主机

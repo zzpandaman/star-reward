@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+sso:
+  service:
+    url: ${SSO_SERVICE_URL:http://localhost:8081}
+
+logging:
+  file:
+    path: /app/logs
+  level:
+    root: INFO
+    com.star.reward: DEBUG
