@@ -104,6 +104,13 @@ docker compose --env-file .env.prod up -d star-reward
 EOF
 ```
 
+### Nginx 配置更新（如 413 Request Entity Too Large）
+
+```bash
+scp /path/to/star-deploy/nginx/conf.d/backend.conf user@server:/opt/star-deploy/nginx/conf.d/
+ssh user@server "docker exec star-nginx nginx -s reload"
+```
+
 ### 版本回滚
 
 ```bash
