@@ -1,5 +1,6 @@
 package com.star.reward.infrastructure.persistence.converter;
 
+import com.alibaba.fastjson2.JSON;
 import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
 import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
 import com.star.reward.domain.tasktemplate.model.valueobject.MinUnit;
@@ -26,8 +27,11 @@ public class TaskInstanceConverter {
         }
         
         TaskInstanceBO bo = new TaskInstanceBO();
-        // 同名字段使用 BeanUtils 复制
-        BeanUtils.copyProperties(doEntity, bo);
+        BeanUtils.copyProperties(doEntity, bo, "attributes");
+        
+        if (doEntity.getAttributes() != null) {
+            bo.setAttributes(JSON.parseObject(doEntity.getAttributes()));
+        }
         
         // 特殊字段手动处理
         bo.setMinUnit(doEntity.getMinUnit() != null ? MinUnit.fromCode(doEntity.getMinUnit()) : null);
@@ -51,8 +55,11 @@ public class TaskInstanceConverter {
         }
         
         RewardTaskInstanceDO target = new RewardTaskInstanceDO();
-        // 同名字段使用 BeanUtils 复制
-        BeanUtils.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target, "attributes");
+        
+        if (source.getAttributes() != null) {
+            target.setAttributes(source.getAttributes().toJSONString());
+        }
         
         // 特殊字段手动处理
         target.setMinUnit(source.getMinUnit() != null ? source.getMinUnit().getCode() : null);

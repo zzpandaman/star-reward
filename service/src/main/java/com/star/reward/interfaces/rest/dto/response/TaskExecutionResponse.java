@@ -1,5 +1,7 @@
 package com.star.reward.interfaces.rest.dto.response;
 
+import com.star.reward.domain.taskinstance.model.valueobject.ExecutionRecordVO;
+import com.star.reward.domain.taskinstance.model.valueobject.PointsDetailItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 任务执行响应
@@ -81,4 +84,14 @@ public class TaskExecutionResponse {
      * 创建时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 执行记录流水
+     */
+    private List<ExecutionRecordVO> executionRecords;
+
+    /**
+     * 积分计算明细
+     */
+    private List<PointsDetailItem> pointsDetails;
 }

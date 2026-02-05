@@ -1,0 +1,103 @@
+---
+description: 扩展字段 AttributeHolder 处理规范
+globs: ["**/domain/**/*.java", "**/infrastructure/persistence/converter/**/*.java"]
+alwaysApply: false
+---
+
+# 扩展字段处理规范
+
+## 1. AttributeHolder 接口（star-common）
+
+接口定义在 `com.star.common`（star-common 仓库），内部使用 `JSONObject`，落表 JSON 干净、无对象引用。
+
+### 核心方法
+
+| 方法 | 用途 |
+|------|------|
+| `getAttributes()` / `setAttributes(JSONObject)` | 读写内部 JSONObject |
+| `addAttributes(key, value)` | 添加单值属性 |
+| `parseAttributes(key, Class)` | 解析单值属性 |
+| `addArrayAttributes(key, value/list, isCover, clazz)` | 添加数组属性（覆盖或追加） |
+| `parseArrayAttributes(key, clazz)` | 解析数组属性 |
+
+### acquire 区别
+
+- `acquireAttributesForWrite()`：会替换已存在的 attributes，用于写入
+- `acquireAttributes()`：不替换，仅读取，null 时返回空 JSONObject
+
+### ObjectMapper 配置
+
+- `FAIL_ON_UNKNOWN_PROPERTIES=false`
+- `NON_NULL` 序列化
+- `WRITE_ENUMS_USING_TO_STRING`
+
+---
+
+## 2. Domain 层用法
+
+### 字段声明
+
+```java
+@JsonIgnore
+private JSONObject attributes;
+```
+
+### 业务字段封装
+
+通过 getter/setter 封装，内部调用 `parseAttributes` / `addAttributes`：
+
+```java
+public XxxAO getXxxAO() {
+    XxxAO ao = parseAttributes(KEY, XxxAO.class);
+    return ao != null ? ao : new XxxAO();
+}
+
+public void setXxxAO(XxxAO ao) {
+    addAttributes(KEY, ao);
+}
+```
+
+### 数组属性
+
+```java
+// 追加
+addArrayAttributes(KEY, item, false, ItemClass.class);
+// 覆盖后追加
+addArrayAttributes(KEY, list, true, ItemClass.class);
+
+List<Item> items = parseArrayAttributes(KEY, ItemClass.class);
+```
+
+---
+
+## 3. Converter 层（BO ↔ DO）
+
+- **DO**：`String attributes`（数据库 JSON 列）
+- **BO**：`JSONObject attributes`，实现 `AttributeHolder`
+
+### BO → DO
+
+```java
+if (source.getAttributes() != null) {
+    target.setAttributes(source.getAttributes().toJSONString());
+}
+```
+
+### DO → BO
+
+```java
+if (source.getAttributes() != null) {
+    bo.setAttributes(JSON.parseObject(source.getAttributes()));
+}
+```
+
+### BeanUtils 注意
+
+`BeanUtils.copyProperties` 会复制同名字段，BO 与 DO 的 attributes 类型不同，需**排除 attributes** 后单独处理。
+
+---
+
+## 4. 禁止事项
+
+- 直接拼 JSON 字符串（如 `"{\"pausedAt\":" + ts + "}"`）
+- 在 BO 中使用 `String attributes` 而非 `JSONObject` + AttributeHolder

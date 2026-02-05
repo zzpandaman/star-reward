@@ -4,8 +4,17 @@ import com.star.common.exception.BusinessException;
 import com.star.common.page.PageResponse;
 import com.star.common.result.ResultCode;
 import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
+import com.star.reward.domain.taskinstance.model.valueobject.ExecutionAction;
+import com.star.reward.domain.taskinstance.model.valueobject.ExecutionInterval;
+import com.star.reward.domain.taskinstance.model.valueobject.ExecutionRecordVO;
 import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
+import com.star.reward.domain.taskinstance.model.valueobject.PointsCalculationResult;
+import com.star.reward.domain.taskinstance.model.valueobject.PointsCalculationSnapshot;
+import com.star.reward.domain.taskinstance.model.valueobject.PointsConversionSegment;
+import com.star.reward.domain.taskinstance.model.valueobject.PointsDetailItem;
 import com.star.reward.domain.taskinstance.repository.TaskInstanceRepository;
+import com.star.reward.domain.taskinstance.service.ExecutionRecordParser;
+import com.star.reward.domain.taskinstance.service.PointsCalculationService;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
 import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
@@ -19,10 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,11 +42,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TaskExecutionApplicationService {
-    
+
     private final TaskInstanceRepository taskInstanceRepository;
     private final TaskTemplateRepository taskTemplateRepository;
     private final UserInventoryRepository userInventoryRepository;
-    
+    private final PointsCalculationService pointsCalculationService;
+
     /**
      * 获取任务执行列表
      */
@@ -48,30 +59,28 @@ public class TaskExecutionApplicationService {
                 .collect(Collectors.toList());
         return PageResponse.of(responses, responses.size(), 1, responses.size());
     }
-    
+
     /**
      * 开始任务
      */
     @Transactional
     public TaskExecutionResponse startTask(StartTaskRequest request) {
         CurrentUserContext user = CurrentUserContext.get();
-        
-        // 检查是否有正在执行或暂停的任务
+
         List<TaskInstanceBO> runningTasks = taskInstanceRepository
                 .findByExecuteByIdAndState(user.getUserId(), InstanceState.RUNNING);
         List<TaskInstanceBO> pausedTasks = taskInstanceRepository
                 .findByExecuteByIdAndState(user.getUserId(), InstanceState.PAUSED);
-        
+
         if (!runningTasks.isEmpty() || !pausedTasks.isEmpty()) {
-            throw new BusinessException(ResultCode.TASK_ALREADY_RUNNING.getCode(), 
+            throw new BusinessException(ResultCode.TASK_ALREADY_RUNNING.getCode(),
                     "一次只能执行一个任务！请先完成当前任务。");
         }
-        
-        // 获取任务模板
+
         TaskTemplateBO template = taskTemplateRepository.findById(request.getTaskTemplateId())
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务模板不存在"));
-        
-        // 创建任务实例
+
+        LocalDateTime now = LocalDateTime.now();
         TaskInstanceBO instance = TaskInstanceBO.builder()
                 .instanceNo(generateInstanceNo())
                 .templateNo(template.getTemplateNo())
@@ -81,7 +90,7 @@ public class TaskExecutionApplicationService {
                 .minUnit(template.getMinUnit())
                 .publishBy(template.getPublishBy())
                 .publishById(template.getPublishById())
-                .startTime(LocalDateTime.now())
+                .startTime(now)
                 .instanceState(InstanceState.RUNNING)
                 .executeBy(user.getUserNo())
                 .executeById(user.getUserId())
@@ -89,13 +98,18 @@ public class TaskExecutionApplicationService {
                 .isDeleted(false)
                 .createBy(user.getUserNo())
                 .createById(user.getUserId())
-                .createTime(LocalDateTime.now())
+                .createTime(now)
                 .build();
-        
+
+        instance.appendExecutionRecord(ExecutionRecordVO.builder()
+                .action(ExecutionAction.START)
+                .actionTime(now)
+                .build());
+
         TaskInstanceBO saved = taskInstanceRepository.save(instance);
         return toResponse(saved);
     }
-    
+
     /**
      * 暂停任务
      */
@@ -103,21 +117,24 @@ public class TaskExecutionApplicationService {
     public TaskExecutionResponse pauseTask(Long id) {
         TaskInstanceBO instance = taskInstanceRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
-        
+
         if (instance.getInstanceState() != InstanceState.RUNNING) {
-            throw new BusinessException(ResultCode.TASK_NOT_RUNNING.getCode(), 
+            throw new BusinessException(ResultCode.TASK_NOT_RUNNING.getCode(),
                     ResultCode.TASK_NOT_RUNNING.getMessage());
         }
-        
+
+        LocalDateTime now = LocalDateTime.now();
         instance.setInstanceState(InstanceState.PAUSED);
-        // 记录暂停时间到 attributes 字段
-        instance.setAttributes(buildPauseAttributes(instance.getAttributes()));
-        instance.setUpdateTime(LocalDateTime.now());
-        
+        instance.appendExecutionRecord(ExecutionRecordVO.builder()
+                .action(ExecutionAction.PAUSE)
+                .actionTime(now)
+                .build());
+        instance.setUpdateTime(now);
+
         TaskInstanceBO updated = taskInstanceRepository.update(instance);
         return toResponse(updated);
     }
-    
+
     /**
      * 恢复任务
      */
@@ -125,55 +142,74 @@ public class TaskExecutionApplicationService {
     public TaskExecutionResponse resumeTask(Long id) {
         TaskInstanceBO instance = taskInstanceRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
-        
+
         if (instance.getInstanceState() != InstanceState.PAUSED) {
-            throw new BusinessException(ResultCode.TASK_NOT_PAUSED.getCode(), 
+            throw new BusinessException(ResultCode.TASK_NOT_PAUSED.getCode(),
                     ResultCode.TASK_NOT_PAUSED.getMessage());
         }
-        
+
+        LocalDateTime now = LocalDateTime.now();
         instance.setInstanceState(InstanceState.RUNNING);
-        // 更新 attributes，记录恢复时间
-        instance.setAttributes(buildResumeAttributes(instance.getAttributes()));
-        instance.setUpdateTime(LocalDateTime.now());
-        
+        instance.appendExecutionRecord(ExecutionRecordVO.builder()
+                .action(ExecutionAction.RESUME)
+                .actionTime(now)
+                .build());
+        instance.setUpdateTime(now);
+
         TaskInstanceBO updated = taskInstanceRepository.update(instance);
         return toResponse(updated);
     }
-    
+
     /**
      * 完成任务
      */
     @Transactional
     public TaskExecutionResponse completeTask(Long id) {
         CurrentUserContext user = CurrentUserContext.get();
-        
+
         TaskInstanceBO instance = taskInstanceRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
-        
+
         if (instance.getInstanceState() == InstanceState.END) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "任务已结束");
         }
-        
+
         LocalDateTime now = LocalDateTime.now();
+        instance.appendExecutionRecord(ExecutionRecordVO.builder()
+                .action(ExecutionAction.END)
+                .actionTime(now)
+                .build());
         instance.setEndTime(now);
         instance.setInstanceState(InstanceState.END);
         instance.setUpdateTime(now);
-        
-        // 计算积分（简化：1分钟1积分）
-        long durationMinutes = Duration.between(instance.getStartTime(), now).toMinutes();
-        BigDecimal reward = BigDecimal.valueOf(durationMinutes);
-        
+
+        List<ExecutionInterval> executionIntervals =
+                ExecutionRecordParser.toExecutionIntervals(instance.getExecutionRecords());
+        Map<Integer, List<PointsConversionSegment>> multiplierToSegments = Collections.emptyMap();
+        int pointsPerMin = instance.getMinUnitPoint() != null ? instance.getMinUnitPoint() : 1;
+
+        PointsCalculationResult result = pointsCalculationService.calculate(
+                executionIntervals, multiplierToSegments, pointsPerMin);
+
+        PointsCalculationSnapshot snapshot = PointsCalculationSnapshot.builder()
+                .totalPoints(result.getTotalPoints())
+                .pointsPerMinute(pointsPerMin)
+                .calculatedAt(now)
+                .details(result.getDetails())
+                .build();
+        instance.setPointsCalculationSnapshot(snapshot);
+
         TaskInstanceBO updated = taskInstanceRepository.update(instance);
-        
-        // 增加用户积分
-        addUserPoints(user, reward, "完成任务: " + instance.getName());
-        
+
+        addUserPoints(user, result.getTotalPoints(), "完成任务: " + instance.getName());
+
         TaskExecutionResponse response = toResponse(updated);
-        response.setActualDuration(BigDecimal.valueOf(durationMinutes));
-        response.setActualReward(reward);
+        response.setActualDuration(calculateTotalDurationMinutes(result.getDetails()));
+        response.setActualReward(result.getTotalPoints());
+        response.setPointsDetails(result.getDetails());
         return response;
     }
-    
+
     /**
      * 取消任务
      */
@@ -181,35 +217,31 @@ public class TaskExecutionApplicationService {
     public TaskExecutionResponse cancelTask(Long id) {
         TaskInstanceBO instance = taskInstanceRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
-        
+
         if (instance.getInstanceState() == InstanceState.END) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "任务已结束");
         }
-        
+
         LocalDateTime now = LocalDateTime.now();
         instance.setEndTime(now);
         instance.setInstanceState(InstanceState.END);
         instance.setUpdateTime(now);
         instance.setRemark("已取消");
-        
+
         TaskInstanceBO updated = taskInstanceRepository.update(instance);
-        
+
         TaskExecutionResponse response = toResponse(updated);
         response.setStatus("cancelled");
         response.setActualReward(BigDecimal.ZERO);
+        response.setPointsDetails(Collections.emptyList());
         return response;
     }
-    
-    /**
-     * 增加用户积分
-     */
+
     private void addUserPoints(CurrentUserContext user, BigDecimal amount, String description) {
-        // 查找用户积分库存
         List<UserInventoryBO> pointInventories = userInventoryRepository
                 .findByBelongToIdAndType(user.getUserId(), InventoryType.POINT);
-        
+
         if (pointInventories.isEmpty()) {
-            // 创建积分库存
             UserInventoryBO inventory = UserInventoryBO.builder()
                     .inventoryNo(generateInventoryNo())
                     .inventoryType(InventoryType.POINT)
@@ -226,7 +258,6 @@ public class TaskExecutionApplicationService {
                     .build();
             userInventoryRepository.save(inventory);
         } else {
-            // 更新积分
             UserInventoryBO inventory = pointInventories.get(0);
             inventory.setQuantity(inventory.getQuantity().add(amount));
             inventory.setUpdateBy(user.getUserNo());
@@ -235,39 +266,25 @@ public class TaskExecutionApplicationService {
             userInventoryRepository.update(inventory);
         }
     }
-    
-    /**
-     * 生成实例编号
-     */
+
     private String generateInstanceNo() {
         return "EXE" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
     }
-    
-    /**
-     * 生成库存编号
-     */
+
     private String generateInventoryNo() {
         return "INV" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
     }
-    
-    /**
-     * 构建暂停属性
-     */
-    private String buildPauseAttributes(String existingAttributes) {
-        long pausedAt = System.currentTimeMillis() / 1000;
-        return "{\"pausedAt\":" + pausedAt + "}";
+
+    private BigDecimal calculateTotalDurationMinutes(List<PointsDetailItem> details) {
+        if (details == null || details.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        long total = details.stream()
+                .mapToLong(d -> d.getDurationMinutes() != null ? d.getDurationMinutes() : 0L)
+                .sum();
+        return BigDecimal.valueOf(total);
     }
-    
-    /**
-     * 构建恢复属性
-     */
-    private String buildResumeAttributes(String existingAttributes) {
-        return "{}";
-    }
-    
-    /**
-     * 转换为响应
-     */
+
     private TaskExecutionResponse toResponse(TaskInstanceBO bo) {
         String status;
         switch (bo.getInstanceState()) {
@@ -283,8 +300,8 @@ public class TaskExecutionApplicationService {
             default:
                 status = "unknown";
         }
-        
-        return TaskExecutionResponse.builder()
+
+        TaskExecutionResponse response = TaskExecutionResponse.builder()
                 .id(bo.getId())
                 .executionNo(bo.getInstanceNo())
                 .userNo(bo.getExecuteBy())
@@ -293,6 +310,35 @@ public class TaskExecutionApplicationService {
                 .endTime(bo.getEndTime() != null ? bo.getEndTime().toEpochSecond(ZoneOffset.of("+8")) : null)
                 .status(status)
                 .createTime(bo.getCreateTime())
+                .executionRecords(bo.getExecutionRecords())
                 .build();
+
+        if (bo.getInstanceState() == InstanceState.END) {
+            PointsCalculationSnapshot snapshot = bo.getPointsCalculationSnapshot();
+            if (snapshot != null) {
+                response.setActualReward(snapshot.getTotalPoints());
+                response.setPointsDetails(snapshot.getDetails());
+                response.setActualDuration(calculateTotalDurationMinutes(snapshot.getDetails()));
+            } else {
+                List<ExecutionInterval> intervals =
+                        ExecutionRecordParser.toExecutionIntervals(bo.getExecutionRecords());
+                Map<Integer, List<PointsConversionSegment>> multiplierToSegments = Collections.emptyMap();
+                int pointsPerMin = bo.getMinUnitPoint() != null ? bo.getMinUnitPoint() : 1;
+                PointsCalculationResult result = pointsCalculationService.calculate(
+                        intervals, multiplierToSegments, pointsPerMin);
+                response.setActualReward(result.getTotalPoints());
+                response.setPointsDetails(result.getDetails());
+                response.setActualDuration(calculateTotalDurationMinutes(result.getDetails()));
+                PointsCalculationSnapshot backfill = PointsCalculationSnapshot.builder()
+                        .totalPoints(result.getTotalPoints())
+                        .pointsPerMinute(pointsPerMin)
+                        .calculatedAt(LocalDateTime.now())
+                        .details(result.getDetails())
+                        .build();
+                bo.setPointsCalculationSnapshot(backfill);
+                taskInstanceRepository.update(bo);
+            }
+        }
+        return response;
     }
 }
