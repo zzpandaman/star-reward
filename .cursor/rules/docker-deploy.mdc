@@ -70,7 +70,7 @@ push main → 构建 star-common → 构建 star-sso api-client → 构建 star-
 ### GitHub Secrets
 
 ```
-REGISTRY_URL    = <服务器IP>   # 走 nginx /v2/ 代理，不要加 :5000
+REGISTRY_URL    = <服务器IP>   # 仅主机名/IP，不要 http://、:5000；nginx 80 端口代理
 REGISTRY_USER   = admin
 REGISTRY_PASS   = <密码>
 SERVER_HOST     = <服务器IP>

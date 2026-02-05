@@ -47,6 +47,15 @@ jobs:
       - name: Build star-reward
         run: mvn clean install -DskipTests -q
 
+      - name: Configure Docker for HTTP registry
+        run: |
+          REGISTRY="${{ secrets.REGISTRY_URL }}"
+          REGISTRY="${REGISTRY#http://}"
+          REGISTRY="${REGISTRY#https://}"
+          REGISTRY="${REGISTRY%%/*}"
+          echo '{"insecure-registries":["'"$REGISTRY"'"]}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+
       - name: Login to Registry
         uses: docker/login-action@v3
         with:
