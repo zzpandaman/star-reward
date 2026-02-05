@@ -107,9 +107,13 @@ EOF
 ### Nginx 配置更新（如 413 Request Entity Too Large）
 
 ```bash
+# 部署后务必执行 reload
+scp /path/to/star-deploy/nginx/nginx.conf user@server:/opt/star-deploy/nginx/
 scp /path/to/star-deploy/nginx/conf.d/backend.conf user@server:/opt/star-deploy/nginx/conf.d/
 ssh user@server "docker exec star-nginx nginx -s reload"
 ```
+
+**若仍 413**：若前有阿里云 SLB/WAF，需在控制台提高「请求体大小」限制（如 500MB）。
 
 ### 版本回滚
 
