@@ -41,8 +41,8 @@ jobs:
 
       - name: Build star-sso api-client
         run: |
-          cd star-sso/api-client
-          mvn clean install -DskipTests -q
+          cd star-sso
+          mvn clean install -DskipTests -pl api-client -am -q
 
       - name: Build star-reward
         run: |
