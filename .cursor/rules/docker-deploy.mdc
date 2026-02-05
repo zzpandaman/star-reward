@@ -124,6 +124,11 @@ docker compose --env-file .env.prod up -d star-reward
 ```bash
 # Portainer 或命令行
 docker logs -f star-reward
-# 或挂载目录
-tail -f /var/log/star/star-reward/star-reward-service.log
+# 或挂载目录（服务器）
+tail -f /opt/star-deploy/logs/star-reward/star-reward-service.log
 ```
+
+### MySQL 在宿主机时
+
+- 后端使用 `network_mode: host`，DB_URL 用 `127.0.0.1`
+- 需在 MySQL 创建 `root@127.0.0.1` 并授权 star_core
