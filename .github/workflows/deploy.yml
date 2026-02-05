@@ -45,9 +45,7 @@ jobs:
           mvn clean install -DskipTests -pl api-client -am -q
 
       - name: Build star-reward
-        run: |
-          mvn clean install -DskipTests -pl api-client -q
-          cd service && mvn clean package spring-boot:repackage -DskipTests -q
+        run: mvn clean install -DskipTests -q
 
       - name: Login to Registry
         uses: docker/login-action@v3
