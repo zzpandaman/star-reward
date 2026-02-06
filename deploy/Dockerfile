@@ -1,4 +1,5 @@
-FROM amazoncorretto:17-alpine
+ARG BASE_IMAGE=amazoncorretto:17-alpine
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 

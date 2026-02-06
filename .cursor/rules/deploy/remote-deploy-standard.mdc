@@ -1,0 +1,74 @@
+---
+description: star-deploy-server 设计文档与规范
+globs: "**/star-deploy-server/**"
+alwaysApply: false
+---
+
+# star-deploy-server 设计规范
+
+## 目录结构
+
+```
+star-deploy-server/
+├── deploy-server.sh        # 一键部署（后端 pull + 前端构建上传）
+├── deploy-nginx-config.sh  # nginx 配置上传 + reload
+├── docker-compose.yml      # nginx + portainer + registry-ui（profiles）
+├── .env.prod               # 根 compose 环境变量
+├── backend/
+│   ├── docker-compose.yml  # 服务器版（Registry 镜像、network_mode: host）
+│   ├── paths.conf          # 仅 CODE_DIR（deploy-server 定位 study-reward-app）
+│   └── .env.prod           # REGISTRY_URL、DB_*、JWT_SECRET
+├── nginx/
+│   ├── conf.d/backend.server.conf  # 含 registry/portainer/registry-ui
+│   └── html/star/          # 前端静态（deploy-server 上传）
+├── server-init.sh          # 服务器初始化（Registry、目录）
+└── scripts/               # 可选脚本
+```
+
+## 脚本职责
+
+| 脚本 | 职责 |
+|------|------|
+| deploy-server.sh | Registry 镜像查看 → 后端 pull+force-recreate → 前端构建 scp 上传 → 健康检查 |
+| deploy-nginx-config.sh | scp nginx.conf、backend.server.conf 到 /opt/star-deploy → reload |
+| server-init.sh | 在服务器执行：Docker、Registry、部署目录、网络 |
+
+## 服务器路径对应
+
+| 本地（star-deploy-server） | 服务器（/opt/star-deploy） |
+|---------------------------|----------------------------|
+| 根目录 | /opt/star-deploy |
+| backend/ | /opt/star-deploy/backend |
+| nginx/ | /opt/star-deploy/nginx |
+
+## 单向同步原则
+
+- **仅上传**：本地修改 star-deploy-server 后，通过 scp 或 deploy-nginx-config.sh 上传到服务器
+- **禁止下载覆盖**：不将服务器配置拉回覆盖本地，本地为唯一配置源
+
+## 后端特性
+
+- 使用 Registry 镜像（localhost:5000/star-sso、star-reward）
+- network_mode: host，DB_URL 用 127.0.0.1
+- 无 build，仅 pull + up
+
+## 单服务部署速查
+
+| 服务 | 部署方式 |
+|------|----------|
+| nginx | `deploy-nginx-config.sh` |
+| star-sso / star-reward | SSH `cd /opt/star-deploy/backend && docker compose pull && up -d --force-recreate` |
+| star-reward-app | `deploy-server.sh` 内建（或单独构建 scp） |
+
+## 需重新打镜像时
+
+1. 调用 trigger-deploy-workflow（指定 star-sso 或 star-reward）
+2. 等待 GitHub Actions 构建完成
+3. 调用 remoteVerify 或 deploy-server.sh 执行 pull + deploy
+
+## 与 ssh-server-deploy、trigger-deploy-workflow、local-env-architecture 衔接
+
+- 部署操作调用 ssh-server-deploy skill
+- 镜像更新流程调用 trigger-deploy-workflow → remoteVerify
+- 本地脚本路径：~/docker/star-deploy-server
+- 不混用 star-deploy-local

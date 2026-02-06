@@ -45,3 +45,14 @@ db/
 ## 部署顺序
 
 star-reward 先启动（执行 Flyway），star-sso 后启动。docker-compose 中 star-sso 依赖 star-reward。
+
+## 故障排查：FlywayValidateException
+
+若出现 `Detected failed migration to version N`，说明 `flyway_schema_history` 有失败记录。本地开发可：
+
+```sql
+-- 删除失败记录后重启
+DELETE FROM flyway_schema_history WHERE success = 0;
+```
+
+或使用 Flyway CLI：`flyway repair`
