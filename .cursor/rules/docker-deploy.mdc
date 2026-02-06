@@ -93,14 +93,27 @@ SERVER_SSH_KEY  = <SSH私钥>
 - 首次初始化需 5 分钟内完成，超时执行 `docker restart portainer`
 - 创建用户后若超时，刷新重试或重启 portainer
 
+### Registry UI
+
+访问 `http://服务器IP/registry-ui/` 查看 Registry 镜像（admin / REGISTRY_PASS）
+
+### 一键部署（推荐）
+
+```bash
+cd ~/docker/star-deploy
+REGISTRY_PASS=<密码> ./deploy-server.sh
+```
+
+脚本会 pull + force-recreate 后端、构建上传前端。
+
 ### 手动部署
 
 ```bash
 ssh user@server << 'EOF'
 cd /opt/star-deploy/backend
 docker login localhost:5000 -u admin -p <password>
-docker pull localhost:5000/star-reward:latest
-docker compose --env-file .env.prod up -d star-reward
+docker compose --env-file .env.prod pull
+docker compose --env-file .env.prod up -d --no-build --force-recreate star-reward
 EOF
 ```
 
@@ -113,10 +126,11 @@ EOF
 ### 版本回滚
 
 ```bash
+# 或访问 http://服务器IP/registry-ui/ 查看镜像
 curl -u admin:password http://localhost/v2/star-reward/tags/list
 cd /opt/star-deploy/backend
 docker pull localhost:5000/star-reward:<commit-sha>
-docker compose --env-file .env.prod up -d star-reward
+docker compose --env-file .env.prod up -d --no-build --force-recreate star-reward
 ```
 
 ### 日志查看
