@@ -1,3 +1,5 @@
+-- reward 表，原 V1__init_reward_tables.sql 重命名
+
 -- 任务模板表
 CREATE TABLE `reward_task_template` (
 	`id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键',

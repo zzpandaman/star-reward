@@ -1,0 +1,47 @@
+---
+description: Flyway 数据库迁移规范（star-reward 唯一维护方）
+alwaysApply: true
+---
+
+# Flyway 迁移规范
+
+## 职责
+
+star-reward 作为 star_core 库的**唯一** Flyway 维护方，管理 sso_* 与 reward_* 表。
+
+## 命名规范
+
+| 类型 | 格式 | 示例 |
+|------|------|------|
+| 版本化迁移 | `V{version}__{prefix}_{description}.sql` | `V1__sso_init_tables.sql`、`V2__reward_add_column.sql` |
+| 可重复迁移 | `R__{prefix}_{description}.sql` | `R__reward_update_view.sql` |
+
+- **prefix**：`sso` / `reward` 区分项目归属
+- 分隔符为双下划线 `__`
+- 已发布迁移**不得修改**，只能新增更高版本
+
+## 目录结构
+
+```
+db/
+├── migration/          # Flyway 自动执行
+│   ├── V1__sso_init_tables.sql
+│   └── V2__reward_init_tables.sql
+└── rollback/           # 手动执行，不纳入 Flyway
+    └── V{n}__{prefix}_xxx_rollback.sql
+```
+
+## 新增迁移
+
+1. 在 `db/migration/` 新建 `V{n}__{sso|reward}_xxx.sql`，n 为当前最大版本 +1
+2. 高风险变更（DROP、大批量 DELETE）同步在 `db/rollback/` 写回滚脚本
+3. PR 中评审 DDL 与回滚脚本
+
+## 回滚
+
+- **方案 A**：执行 `db/rollback/V{n}__xxx_rollback.sql`（手动）
+- **方案 B**：新增补偿迁移 `V{n+1}__{prefix}_revert_xxx.sql`
+
+## 部署顺序
+
+star-reward 先启动（执行 Flyway），star-sso 后启动。docker-compose 中 star-sso 依赖 star-reward。
