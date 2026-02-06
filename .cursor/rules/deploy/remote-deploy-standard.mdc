@@ -72,3 +72,13 @@ star-deploy-server/
 - 镜像更新流程调用 trigger-deploy-workflow → remoteVerify
 - 本地脚本路径：~/docker/star-deploy-server
 - 不混用 star-deploy-local
+
+## 故障排查：star-reward 502 / Flyway connection disabled
+
+若日志出现 `SELECT command denied to user 'root'@'127.0.0.1' for table 'user_variables_by_thread'`，为 MySQL 8+ 权限问题。需在服务器执行：
+
+```bash
+ssh myServer "mysql -u root -p -e \"GRANT SELECT ON performance_schema.* TO 'root'@'127.0.0.1'; FLUSH PRIVILEGES;\""
+```
+
+或使用 `scripts/fix-mysql-flyway-permissions.sql`。

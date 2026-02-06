@@ -7,6 +7,7 @@
 ## 模块说明
 
 ### 1. api-client 模块
+
 **位置**: `api-client/`
 
 **作用**: Feign API 二方包，独立打包供其他服务依赖
@@ -18,6 +19,7 @@
 **打包**: `star-reward-api-client-1.0.0-SNAPSHOT.jar`
 
 ### 2. service 模块
+
 **位置**: `service/`
 
 **作用**: 主服务模块，包含完整的 DDD 分层架构
@@ -25,6 +27,7 @@
 ## DDD 分层结构
 
 ### Domain (领域层)
+
 **位置**: `service/src/main/java/com/star/reward/domain/`
 
 - `model/entity/` - 领域实体
@@ -36,6 +39,7 @@
 - `exception/` - 领域异常
 
 ### Application (应用层)
+
 **位置**: `service/src/main/java/com/star/reward/application/`
 
 - `service/` - 应用服务（用例编排）
@@ -46,6 +50,7 @@
 - `scheduler/` - 定时任务
 
 ### Infrastructure (基础设施层)
+
 **位置**: `service/src/main/java/com/star/reward/infrastructure/`
 
 - `persistence/`
@@ -64,6 +69,7 @@
 - `event/` - 事件发布实现
 
 ### Interfaces (接口层)
+
 **位置**: `service/src/main/java/com/star/reward/interfaces/`
 
 - `rest/` - REST API
@@ -79,6 +85,7 @@
 - `messaging/` - 消息队列（可选）
 
 ### Shared (共享层)
+
 **位置**: `service/src/main/java/com/star/reward/shared/`
 
 - `constant/` - 常量
@@ -96,19 +103,23 @@
 ## 配置文件
 
 ### 主配置
+
 - `service/src/main/resources/application.yml` - 主配置文件
 - `service/src/main/resources/application-dev.yml` - 开发环境
 - `service/src/main/resources/application-test.yml` - 测试环境
 - `service/src/main/resources/application-prod.yml` - 生产环境
 
 ### MyBatis Generator
+
 - `service/src/main/resources/generator/generatorConfig.xml` - Generator 配置
 
 ### MyBatis Mapper
+
 - `service/src/main/resources/mapper/` - Mapper XML 文件
 - `service/src/main/resources/mapper/custom/` - 自定义 Mapper
 
 ### 数据库迁移
+
 - `service/src/main/resources/db/migration/` - 数据库迁移脚本
 
 ## 依赖关系
@@ -125,18 +136,21 @@ service
 ## 使用说明
 
 ### 1. 启动项目
+
 ```bash
 cd service
 mvn spring-boot:run
 ```
 
 ### 2. 使用 MyBatis Generator
+
 修改 `generatorConfig.xml` 中的数据库连接和表配置，然后运行：
 ```bash
 mvn mybatis-generator:generate
 ```
 
 ### 3. 打包
+
 ```bash
 # 打包所有模块
 mvn clean package
