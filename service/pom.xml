@@ -75,14 +75,10 @@
             <artifactId>druid-spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- Flyway -->
+        <!-- Flyway（7.7.2 含 MySQL 支持，无需 flyway-mysql） -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-mysql</artifactId>
         </dependency>
 
         <!-- Redis -->
