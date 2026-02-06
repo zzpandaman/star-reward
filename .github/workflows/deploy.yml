@@ -44,11 +44,8 @@ jobs:
           cd star-sso
           mvn clean install -DskipTests -pl api-client -am -q
 
-      - name: Build star-reward api-client
-        run: mvn clean install -DskipTests -pl api-client -q
-
-      - name: Build star-reward service
-        run: mvn clean package spring-boot:repackage -DskipTests -pl service -q
+      - name: Build star-reward
+        run: mvn clean install -DskipTests -q
 
       - name: Configure Docker for HTTP registry
         run: |
@@ -84,5 +81,5 @@ jobs:
             docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USER }} -p ${{ secrets.REGISTRY_PASS }}
             docker pull ${{ secrets.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:latest
             cd /opt/star-deploy/backend
-            docker-compose --env-file .env.prod up -d --no-build star-reward
+            docker-compose --env-file .env.prod up -d --no-build --force-recreate star-reward
             echo "Deployed ${{ env.IMAGE_NAME }}:${{ github.sha }}"
