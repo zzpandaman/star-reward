@@ -36,7 +36,7 @@ star-reward/
 
 路径: `infrastructure/`
 
-- `persistence/dao/` - MyBatis DAO
+- `persistence/dao/` - MyBatis DAO（Generator 生成，详见 `domain/dao-layer.mdc`：generator、fix-dao-layer-code、buildExample 范式）
 - `persistence/repository/` - 仓储实现
 - `persistence/converter/` - DO ↔ BO 转换
 - `external/feign/` - 外部服务调用
@@ -113,4 +113,5 @@ GlobalExceptionHandler (异常处理)
 
 ## 补充规则
 
-域常量、充血模型规范见 `domain/domain-constants-rich-model.mdc`
+- 域常量、充血模型规范见 `domain/domain-constants-rich-model.mdc`
+- DAO 基建（MyBatis Generator、fix-dao-layer-code、buildExample）见 `domain/dao-layer.mdc`

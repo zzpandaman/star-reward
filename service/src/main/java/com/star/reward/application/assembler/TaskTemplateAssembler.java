@@ -1,8 +1,10 @@
 package com.star.reward.application.assembler;
 
 import com.star.reward.application.command.CreateTaskTemplateCommand;
+import com.star.reward.application.command.TaskTemplateQueryCommand;
 import com.star.reward.application.command.UpdateTaskTemplateCommand;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
+import com.star.reward.domain.tasktemplate.model.query.TaskTemplateQueryParam;
 import com.star.reward.interfaces.rest.dto.response.TaskTemplateResponse;
 
 import java.time.LocalDateTime;

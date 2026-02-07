@@ -30,6 +30,10 @@
         <plugin type="org.mybatis.generator.plugins.ToStringPlugin" />
 
         <plugin type="org.mybatis.generator.plugins.UnmergeableXmlMappersPlugin" />
+        <!-- itfsw MySQL 分页插件：Example 增加 limit/page 方法，Mapper 增加 LIMIT -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.LimitPlugin">
+            <property name="startPage" value="1"/>
+        </plugin>
         <!-- 使用自带序列化插件 -->
         <plugin type="org.mybatis.generator.plugins.SerializablePlugin" />
 

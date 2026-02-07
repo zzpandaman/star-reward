@@ -5,6 +5,7 @@ import com.star.common.result.Result;
 import com.star.reward.application.service.ProductApplicationService;
 import com.star.reward.interfaces.rest.assembler.ProductRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.CreateProductRequest;
+import com.star.reward.interfaces.rest.dto.request.ProductQueryRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateProductRequest;
 import com.star.reward.interfaces.rest.dto.response.ProductResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +23,13 @@ public class ProductController {
     private final ProductApplicationService productApplicationService;
     
     /**
-     * 获取所有商品
+     * 分页查询商品
      */
-    @GetMapping
-    public Result<PageResponse<ProductResponse>> getAllProducts() {
-        PageResponse<ProductResponse> response = productApplicationService.getAllProducts();
+    @PostMapping
+    public Result<PageResponse<ProductResponse>> getAllProducts(
+            @RequestBody ProductQueryRequest request) {
+        PageResponse<ProductResponse> response = productApplicationService.getAllProducts(
+                ProductRequestAssembler.requestToQueryCommand(request));
         return Result.success(response);
     }
     

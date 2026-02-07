@@ -15,6 +15,7 @@ import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
 import com.star.reward.domain.pointrecord.repository.PointRecordRepository;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import com.star.reward.application.command.StartTaskCommand;
+import com.star.reward.application.command.TaskExecutionQueryCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import com.star.reward.shared.context.CurrentUserContext;
 import org.junit.jupiter.api.AfterEach;
@@ -229,14 +230,19 @@ class TaskExecutionApplicationServiceTest {
     void getTaskExecutions_END任务无快照补全() {
         TaskInstanceBO instance = createEndedInstance();
         instance.setPointsCalculationSnapshot(null);
-        when(taskInstanceRepository.findByExecuteById(USER_ID)).thenReturn(Collections.singletonList(instance));
+        when(taskInstanceRepository.listByQuery(any())).thenReturn(Collections.singletonList(instance));
+        when(taskInstanceRepository.countByQuery(any())).thenReturn(1L);
         when(taskInstanceRepository.update(any(TaskInstanceBO.class))).thenAnswer(i -> i.getArgument(0));
 
         PointsCalculationResult calcResult = PointsCalculationResult.of(
                 BigDecimal.valueOf(60), Collections.emptyList());
         when(pointsCalculationService.calculate(any(), any(), any())).thenReturn(calcResult);
 
-        service.getTaskExecutions();
+        TaskExecutionQueryCommand command = new TaskExecutionQueryCommand();
+        command.setPage(1);
+        command.setPageSize(10);
+        command.setState("all");
+        service.getTaskExecutions(command);
 
         verify(pointsCalculationService).calculate(any(), any(), any());
         verify(taskInstanceRepository).update(any(TaskInstanceBO.class));

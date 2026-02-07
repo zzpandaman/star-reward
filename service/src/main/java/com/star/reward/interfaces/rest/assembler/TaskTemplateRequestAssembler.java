@@ -1,8 +1,10 @@
 package com.star.reward.interfaces.rest.assembler;
 
 import com.star.reward.application.command.CreateTaskTemplateCommand;
+import com.star.reward.application.command.TaskTemplateQueryCommand;
 import com.star.reward.application.command.UpdateTaskTemplateCommand;
 import com.star.reward.interfaces.rest.dto.request.CreateTaskTemplateRequest;
+import com.star.reward.interfaces.rest.dto.request.TaskTemplateQueryRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateTaskTemplateRequest;
 
 /**
@@ -11,6 +13,16 @@ import com.star.reward.interfaces.rest.dto.request.UpdateTaskTemplateRequest;
 public final class TaskTemplateRequestAssembler {
 
     private TaskTemplateRequestAssembler() {
+    }
+
+    public static TaskTemplateQueryCommand requestToQueryCommand(TaskTemplateQueryRequest request) {
+        if (request == null) {
+            return new TaskTemplateQueryCommand();
+        }
+        TaskTemplateQueryCommand cmd = new TaskTemplateQueryCommand();
+        cmd.setPage(request.getPage());
+        cmd.setPageSize(request.getPageSize());
+        return cmd;
     }
 
     public static CreateTaskTemplateCommand requestToCreateCommand(CreateTaskTemplateRequest request) {

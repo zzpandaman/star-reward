@@ -4,6 +4,7 @@ import com.star.common.exception.BusinessException;
 import com.star.common.page.PageResponse;
 import com.star.common.result.ResultCode;
 import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
+import com.star.reward.domain.taskinstance.model.query.TaskInstanceQueryParam;
 import com.star.reward.domain.taskinstance.model.valueobject.ExecutionAction;
 import com.star.reward.domain.taskinstance.model.valueobject.ExecutionInterval;
 import com.star.reward.domain.taskinstance.model.valueobject.ExecutionRecordVO;
@@ -24,6 +25,7 @@ import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import com.star.reward.application.command.StartTaskCommand;
+import com.star.reward.application.command.TaskExecutionQueryCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import com.star.reward.shared.context.CurrentUserContext;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +41,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -70,15 +74,50 @@ public class TaskExecutionApplicationService {
     }
 
     /**
-     * 获取任务执行列表
+     * 获取任务执行列表，支持分页与状态过滤（进行中=RUNNING+PAUSED），DB 级分页
      */
-    public PageResponse<TaskExecutionResponse> getTaskExecutions() {
+    public PageResponse<TaskExecutionResponse> getTaskExecutions(TaskExecutionQueryCommand command) {
         CurrentUserContext user = CurrentUserContext.get();
-        List<TaskInstanceBO> instances = taskInstanceRepository.findByExecuteById(user.getUserId());
+        Set<InstanceState> stateFilter = resolveStateFilter(command != null ? command.getState() : null);
+        int page = command != null && command.getPage() != null && command.getPage() > 0
+                ? command.getPage() : 1;
+        int pageSize = command != null && command.getPageSize() != null && command.getPageSize() > 0
+                ? command.getPageSize() : 10;
+
+        TaskInstanceQueryParam param = TaskInstanceQueryParam.builder()
+                .executeById(user.getUserId())
+                .instanceStates(stateFilter.stream()
+                        .map(InstanceState::getCode)
+                        .collect(Collectors.toList()))
+                .orderBy("create_time DESC")
+                .build();
+        param.setPage(page);
+        param.setPageSize(pageSize);
+
+        List<TaskInstanceBO> instances = taskInstanceRepository.listByQuery(param);
+        long total = taskInstanceRepository.countByQuery(param);
         List<TaskExecutionResponse> responses = instances.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
-        return PageResponse.of(responses, responses.size(), 1, responses.size());
+        return PageResponse.of(responses, (int) total, page, pageSize);
+    }
+
+    private Set<InstanceState> resolveStateFilter(String state) {
+        if (state == null || state.isEmpty()) {
+            return EnumSet.of(InstanceState.RUNNING, InstanceState.PAUSED);
+        }
+        switch (state.toLowerCase()) {
+            case "running":
+                return EnumSet.of(InstanceState.RUNNING);
+            case "paused":
+                return EnumSet.of(InstanceState.PAUSED);
+            case "ongoing":
+                return EnumSet.of(InstanceState.RUNNING, InstanceState.PAUSED);
+            case "all":
+                return EnumSet.allOf(InstanceState.class);
+            default:
+                return EnumSet.of(InstanceState.RUNNING, InstanceState.PAUSED);
+        }
     }
 
     /**

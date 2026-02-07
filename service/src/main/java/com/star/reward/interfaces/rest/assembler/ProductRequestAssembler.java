@@ -1,8 +1,10 @@
 package com.star.reward.interfaces.rest.assembler;
 
 import com.star.reward.application.command.CreateProductCommand;
+import com.star.reward.application.command.ProductQueryCommand;
 import com.star.reward.application.command.UpdateProductCommand;
 import com.star.reward.interfaces.rest.dto.request.CreateProductRequest;
+import com.star.reward.interfaces.rest.dto.request.ProductQueryRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateProductRequest;
 
 /**
@@ -11,6 +13,16 @@ import com.star.reward.interfaces.rest.dto.request.UpdateProductRequest;
 public final class ProductRequestAssembler {
 
     private ProductRequestAssembler() {
+    }
+
+    public static ProductQueryCommand requestToQueryCommand(ProductQueryRequest request) {
+        if (request == null) {
+            return new ProductQueryCommand();
+        }
+        ProductQueryCommand cmd = new ProductQueryCommand();
+        cmd.setPage(request.getPage());
+        cmd.setPageSize(request.getPageSize());
+        return cmd;
     }
 
     public static CreateProductCommand requestToCreateCommand(CreateProductRequest request) {

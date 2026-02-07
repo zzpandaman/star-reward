@@ -1,6 +1,7 @@
 package com.star.reward.infrastructure.persistence.repository;
 
 import com.star.reward.domain.pointrecord.model.entity.PointRecordBO;
+import com.star.reward.domain.pointrecord.model.query.PointRecordQueryParam;
 import com.star.reward.domain.pointrecord.model.valueobject.PointRecordType;
 import com.star.reward.domain.pointrecord.repository.PointRecordRepository;
 import com.star.reward.infrastructure.persistence.converter.PointRecordConverter;
@@ -9,6 +10,7 @@ import com.star.reward.infrastructure.persistence.dao.entity.RewardPointRecordDO
 import com.star.reward.infrastructure.persistence.dao.mapper.RewardPointRecordDOMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,25 +43,45 @@ public class PointRecordRepositoryImpl implements PointRecordRepository {
 
     @Override
     public List<PointRecordBO> findByBelongToId(Long belongToId) {
-        RewardPointRecordDOExample example = new RewardPointRecordDOExample();
-        example.createCriteria().andBelongToIdEqualTo(belongToId);
-        example.setOrderByClause("create_time DESC");
-        List<RewardPointRecordDO> list = mapper.selectByExample(example);
-        return list.stream()
-                .map(PointRecordConverter::doToEntity)
-                .collect(Collectors.toList());
+        return list(PointRecordQueryParam.builder().belongToId(belongToId).build());
     }
 
     @Override
     public List<PointRecordBO> findByBelongToIdAndType(Long belongToId, PointRecordType pointType) {
-        RewardPointRecordDOExample example = new RewardPointRecordDOExample();
-        example.createCriteria()
-                .andBelongToIdEqualTo(belongToId)
-                .andPointTypeEqualTo(pointType.getCode());
-        example.setOrderByClause("create_time DESC");
-        List<RewardPointRecordDO> list = mapper.selectByExample(example);
-        return list.stream()
+        return list(PointRecordQueryParam.builder()
+                .belongToId(belongToId)
+                .type(pointType != null ? pointType.getCode() : null)
+                .build());
+    }
+
+    @Override
+    public List<PointRecordBO> listByQuery(PointRecordQueryParam param) {
+        return list(param);
+    }
+
+    private List<PointRecordBO> list(PointRecordQueryParam param) {
+        RewardPointRecordDOExample example = buildExample(param);
+        return mapper.selectByExample(example).stream()
                 .map(PointRecordConverter::doToEntity)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * buildExample 范式：从 Param 构建 Example，仅使用 createCriteria().andXxx()，支持 null 可选条件
+     */
+    private static RewardPointRecordDOExample buildExample(PointRecordQueryParam param) {
+        RewardPointRecordDOExample example = new RewardPointRecordDOExample();
+        RewardPointRecordDOExample.Criteria c = example.createCriteria();
+        if (param != null && param.getBelongToId() != null) {
+            c.andBelongToIdEqualTo(param.getBelongToId());
+        }
+        if (param != null && StringUtils.hasText(param.getType())) {
+            c.andPointTypeEqualTo(param.getType());
+        }
+        example.setOrderByClause("create_time DESC");
+        if (param != null && param.hasPagination()) {
+            example.page(param.getPage(), param.getPageSize());
+        }
+        return example;
     }
 }

@@ -1,6 +1,7 @@
 package com.star.reward.infrastructure.persistence.repository;
 
 import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
+import com.star.reward.domain.userinventory.model.query.UserInventoryQueryParam;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import com.star.reward.infrastructure.persistence.converter.UserInventoryConverter;
@@ -9,6 +10,7 @@ import com.star.reward.infrastructure.persistence.dao.entity.RewardUserInventory
 import com.star.reward.infrastructure.persistence.dao.mapper.RewardUserInventoryDOMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,19 +24,13 @@ import java.util.stream.Collectors;
 public class UserInventoryRepositoryImpl implements UserInventoryRepository {
 
     private final RewardUserInventoryDOMapper mapper;
-    
+
     @Override
     public Optional<UserInventoryBO> findByInventoryNo(String inventoryNo) {
-        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
-        example.createCriteria().andInventoryNoEqualTo(inventoryNo).andIsDeletedEqualTo((byte) 0);
-        
-        List<RewardUserInventoryDO> list = mapper.selectByExample(example);
-        if (list.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(UserInventoryConverter.doToEntity(list.get(0)));
+        List<UserInventoryBO> list = list(UserInventoryQueryParam.builder().inventoryNo(inventoryNo).build());
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
-    
+
     @Override
     public Optional<UserInventoryBO> findById(Long id) {
         RewardUserInventoryDO doEntity = mapper.selectByPrimaryKey(id);
@@ -43,21 +39,21 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
         }
         return Optional.of(UserInventoryConverter.doToEntity(doEntity));
     }
-    
+
     @Override
     public UserInventoryBO save(UserInventoryBO userInventory) {
         RewardUserInventoryDO doEntity = UserInventoryConverter.entityToDo(userInventory);
         mapper.insertSelective(doEntity);
         return UserInventoryConverter.doToEntity(doEntity);
     }
-    
+
     @Override
     public UserInventoryBO update(UserInventoryBO userInventory) {
         RewardUserInventoryDO doEntity = UserInventoryConverter.entityToDo(userInventory);
         mapper.updateByPrimaryKeySelective(doEntity);
         return UserInventoryConverter.doToEntity(mapper.selectByPrimaryKey(userInventory.getId()));
     }
-    
+
     @Override
     public void delete(Long id) {
         RewardUserInventoryDO doEntity = mapper.selectByPrimaryKey(id);
@@ -66,47 +62,65 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
             mapper.updateByPrimaryKeySelective(doEntity);
         }
     }
-    
+
     @Override
     public List<UserInventoryBO> findByBelongToId(Long belongToId) {
-        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
-        example.createCriteria().andBelongToIdEqualTo(belongToId).andIsDeletedEqualTo((byte) 0);
-        List<RewardUserInventoryDO> list = mapper.selectByExample(example);
-        return list.stream()
-                .map(UserInventoryConverter::doToEntity)
-                .collect(Collectors.toList());
+        return list(UserInventoryQueryParam.builder().belongToId(belongToId).build());
     }
-    
+
     @Override
     public List<UserInventoryBO> findByInventoryType(InventoryType inventoryType) {
-        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
-        example.createCriteria().andInventoryTypeEqualTo(inventoryType.getCode()).andIsDeletedEqualTo((byte) 0);
-        List<RewardUserInventoryDO> list = mapper.selectByExample(example);
-        return list.stream()
-                .map(UserInventoryConverter::doToEntity)
-                .collect(Collectors.toList());
+        return list(UserInventoryQueryParam.builder()
+                .inventoryType(inventoryType != null ? inventoryType.getCode() : null)
+                .build());
     }
-    
+
     @Override
     public List<UserInventoryBO> findByBelongToIdAndType(Long belongToId, InventoryType inventoryType) {
-        RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
-        example.createCriteria()
-                .andBelongToIdEqualTo(belongToId)
-                .andInventoryTypeEqualTo(inventoryType.getCode())
-                .andIsDeletedEqualTo((byte) 0);
-        List<RewardUserInventoryDO> list = mapper.selectByExample(example);
-        return list.stream()
+        return list(UserInventoryQueryParam.builder()
+                .belongToId(belongToId)
+                .inventoryType(inventoryType != null ? inventoryType.getCode() : null)
+                .build());
+    }
+
+    @Override
+    public List<UserInventoryBO> findByPublishById(Long publishById) {
+        return list(UserInventoryQueryParam.builder().publishById(publishById).build());
+    }
+
+    private List<UserInventoryBO> list(UserInventoryQueryParam param) {
+        RewardUserInventoryDOExample example = buildExample(param);
+        return mapper.selectByExample(example).stream()
                 .map(UserInventoryConverter::doToEntity)
                 .collect(Collectors.toList());
     }
-    
-    @Override
-    public List<UserInventoryBO> findByPublishById(Long publishById) {
+
+    private static RewardUserInventoryDOExample buildExample(UserInventoryQueryParam param) {
         RewardUserInventoryDOExample example = new RewardUserInventoryDOExample();
-        example.createCriteria().andPublishByIdEqualTo(publishById).andIsDeletedEqualTo((byte) 0);
-        List<RewardUserInventoryDO> list = mapper.selectByExample(example);
-        return list.stream()
-                .map(UserInventoryConverter::doToEntity)
-                .collect(Collectors.toList());
+        RewardUserInventoryDOExample.Criteria c = example.createCriteria();
+        if (param != null) {
+            if (StringUtils.hasText(param.getInventoryNo())) {
+                c.andInventoryNoEqualTo(param.getInventoryNo());
+            }
+            if (param.getBelongToId() != null) {
+                c.andBelongToIdEqualTo(param.getBelongToId());
+            }
+            if (StringUtils.hasText(param.getInventoryType())) {
+                c.andInventoryTypeEqualTo(param.getInventoryType());
+            }
+            if (param.getPublishById() != null) {
+                c.andPublishByIdEqualTo(param.getPublishById());
+            }
+            c.andIsDeletedEqualTo(param.getIsDeleted() != null ? param.getIsDeleted() : (byte) 0);
+        } else {
+            c.andIsDeletedEqualTo((byte) 0);
+        }
+        if (param != null && StringUtils.hasText(param.getOrderBy())) {
+            example.setOrderByClause(param.getOrderBy());
+        }
+        if (param != null && param.hasPagination()) {
+            example.page(param.getPage(), param.getPageSize());
+        }
+        return example;
     }
 }

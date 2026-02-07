@@ -1,8 +1,10 @@
 package com.star.reward.application.assembler;
 
 import com.star.reward.application.command.CreateProductCommand;
+import com.star.reward.application.command.ProductQueryCommand;
 import com.star.reward.application.command.UpdateProductCommand;
 import com.star.reward.domain.product.model.entity.ProductBO;
+import com.star.reward.domain.product.model.query.ProductQueryParam;
 import com.star.reward.interfaces.rest.dto.response.ProductResponse;
 
 import java.time.LocalDateTime;
@@ -14,6 +16,19 @@ import java.time.LocalDateTime;
 public final class ProductAssembler {
 
     private ProductAssembler() {
+    }
+
+    /**
+     * Command → QueryParam（供 Repository listByQuery 使用）
+     */
+    public static ProductQueryParam commandToQueryParam(ProductQueryCommand command) {
+        if (command == null) {
+            return ProductQueryParam.builder().build();
+        }
+        ProductQueryParam param = ProductQueryParam.builder().build();
+        param.setPage(command.getPage());
+        param.setPageSize(command.getPageSize());
+        return param;
     }
 
     /**

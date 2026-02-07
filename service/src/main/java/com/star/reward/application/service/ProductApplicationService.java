@@ -5,7 +5,9 @@ import com.star.common.page.PageResponse;
 import com.star.common.result.ResultCode;
 import com.star.reward.application.assembler.ProductAssembler;
 import com.star.reward.application.command.CreateProductCommand;
+import com.star.reward.application.command.ProductQueryCommand;
 import com.star.reward.domain.product.model.constant.ProductConstants;
+import com.star.reward.domain.product.model.query.ProductQueryParam;
 import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.domain.product.repository.ProductRepository;
 import com.star.reward.domain.purchaserecord.repository.PurchaseRecordRepository;
@@ -36,14 +38,18 @@ public class ProductApplicationService {
     private final PurchaseRecordRepository purchaseRecordRepository;
     
     /**
-     * 获取所有商品
+     * 分页查询商品
      */
-    public PageResponse<ProductResponse> getAllProducts() {
-        List<ProductBO> products = productRepository.findAll();
+    public PageResponse<ProductResponse> getAllProducts(ProductQueryCommand command) {
+        ProductQueryParam param = ProductAssembler.commandToQueryParam(command);
+        param.setPage(command != null ? command.getPage() : 1);
+        param.setPageSize(command != null ? command.getPageSize() : 10);
+        List<ProductBO> products = productRepository.listByQuery(param);
+        long total = productRepository.countByQuery(param);
         List<ProductResponse> responses = products.stream()
                 .map(ProductAssembler::entityToResponse)
                 .collect(Collectors.toList());
-        return PageResponse.of(responses, responses.size(), 1, responses.size());
+        return PageResponse.of(responses, total, param);
     }
     
     /**

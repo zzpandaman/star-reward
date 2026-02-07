@@ -1,6 +1,7 @@
 package com.star.reward.domain.product.repository;
 
 import com.star.reward.domain.product.model.entity.ProductBO;
+import com.star.reward.domain.product.model.query.ProductQueryParam;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,16 @@ public interface ProductRepository {
      * 查询所有未删除的商品
      */
     List<ProductBO> findAll();
+
+    /**
+     * 分页查询商品
+     */
+    List<ProductBO> listByQuery(ProductQueryParam param);
+
+    /**
+     * 统计符合条件的商品数量
+     */
+    long countByQuery(ProductQueryParam param);
     
     /**
      * 根据是否为预设查询

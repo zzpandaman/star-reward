@@ -5,6 +5,7 @@ import com.star.common.result.Result;
 import com.star.reward.application.service.TaskExecutionApplicationService;
 import com.star.reward.interfaces.rest.assembler.TaskExecutionRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.StartTaskRequest;
+import com.star.reward.interfaces.rest.dto.request.TaskExecutionQueryRequest;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -31,11 +32,15 @@ public class TaskExecutionController {
     }
 
     /**
-     * 获取任务执行列表
+     * 获取任务执行列表，支持分页与状态过滤
+     *
+     * @param request 查询参数：page(默认1)、pageSize(默认10)、state(ongoing|running|paused|all，默认ongoing)
      */
-    @GetMapping
-    public Result<PageResponse<TaskExecutionResponse>> getTaskExecutions() {
-        PageResponse<TaskExecutionResponse> response = taskExecutionApplicationService.getTaskExecutions();
+    @PostMapping
+    public Result<PageResponse<TaskExecutionResponse>> getTaskExecutions(
+            @RequestBody TaskExecutionQueryRequest request) {
+        PageResponse<TaskExecutionResponse> response = taskExecutionApplicationService
+                .getTaskExecutions(TaskExecutionRequestAssembler.requestToQueryCommand(request));
         return Result.success(response);
     }
     

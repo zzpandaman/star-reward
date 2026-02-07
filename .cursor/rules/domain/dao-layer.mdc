@@ -1,0 +1,89 @@
+---
+description: DAO 基建规范（MyBatis Generator、fix-dao-layer-code、buildExample 范式）
+alwaysApply: false
+globs: "**/persistence/**/*.java,**/persistence/**/*.xml,**/generator/**/*.xml"
+---
+
+# DAO 基建规范
+
+## 基建流程（稳固、可复用）
+
+适用于首次建表、后续单表或多表结构变更，均按此流程执行：
+
+1. **generatorConfig**：仅保留需更新的表，其余用 `<!-- -->` 注释
+2. **mvn mybatis-generator:generate**：必须在 `service/` 目录执行
+3. **fix-dao-layer-code**：Mapper XML 中 criteria 连接改为 and
+4. **buildExample(param)**：基于 QueryCommand/Param 构建 Example
+
+## MyBatis Generator
+
+### 配置
+
+- 路径：`service/src/main/resources/generator/generatorConfig.xml`
+- 按需注释表：开发时只取消注释需要更新的表，其他表用 `<!-- <table .../> -->` 注释
+- LimitPlugin：`startPage=1`，Example 自动生成 `limit()`、`page(page, pageSize)`
+
+### 运行
+
+```bash
+cd service
+mvn mybatis-generator:generate
+```
+
+生成位置：`dao/entity/`、`dao/example/`、`dao/mapper/`、`resources/mapper/`
+
+## fix-dao-layer-code
+
+Generator 生成的 Mapper XML 默认多个 criteria 用 `or` 连接。改为 `and` 连接便于业务扩展（查询条件通常为 AND）。
+
+### 修改内容
+
+在 `*DOMapper.xml` 中：
+
+- `Example_Where_Clause`：`<foreach ... separator="or">` → `separator="and"`
+- `Update_By_Example_Where_Clause`：同上
+
+### 执行时机
+
+每次运行 `mvn mybatis-generator:generate` 后必须执行 fix-dao-layer-code（Generator 会覆盖 XML）。
+
+## buildExample(param) 范式
+
+### 约定
+
+- **Param**：包含该表**所有**可查询条件字段，一次维护
+- **buildExample(param)**：**唯一**把 Param → Example 的地方，每个表仅一个，**禁止**多处重复构建 Example
+- **list(param)**：统一查询入口，内部 `selectByExample(buildExample(param))`
+- **findByXxx**：仅作薄封装 `list(Param.builder().xxx().build())`，**禁止**内联 Example 构建
+- **按条件更新**：统一走 `updateByExampleSelective(record, buildExample(param))`
+- 入参可选条件做 null 判断，非 null 才添加到 Example
+- 仅使用 `example.createCriteria().andXxx()`，**禁止** `example.or()`
+
+### 示例
+
+```java
+// findByXxx 薄封装
+public List<TaskInstanceBO> findByExecuteById(Long id) {
+    return list(TaskInstanceQueryParam.builder().executeById(id).build());
+}
+
+// 唯一查询入口
+private List<TaskInstanceBO> list(TaskInstanceQueryParam param) {
+    RewardTaskInstanceDOExample ex = buildExample(param);
+    return mapper.selectByExample(ex).stream().map(Converter::doToEntity).collect(toList());
+}
+
+// 唯一 Example 构建，覆盖所有条件字段
+private static RewardTaskInstanceDOExample buildExample(TaskInstanceQueryParam param) {
+    // 所有条件字段在此维护，null 不添加
+}
+```
+
+### 放置位置
+
+- 单表：RepositoryImpl 内 private static buildExample、private list
+- 多表或复杂逻辑：可抽到 `XxxExampleBuilder` 工具类
+
+## 分页
+
+使用 itfsw LimitPlugin 生成的 `example.page(page, pageSize)`，配合 `selectByExample`、`countByExample` 实现分页查询。

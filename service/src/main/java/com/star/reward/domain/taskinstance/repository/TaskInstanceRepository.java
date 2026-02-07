@@ -1,6 +1,7 @@
 package com.star.reward.domain.taskinstance.repository;
 
 import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
+import com.star.reward.domain.taskinstance.model.query.TaskInstanceQueryParam;
 import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
 
 import java.util.List;
@@ -55,4 +56,14 @@ public interface TaskInstanceRepository {
      * 根据执行人ID和状态查询
      */
     List<TaskInstanceBO> findByExecuteByIdAndState(Long executeById, InstanceState instanceState);
+
+    /**
+     * 分页查询，支持 executeById、instanceStates 等条件
+     */
+    List<TaskInstanceBO> listByQuery(TaskInstanceQueryParam param);
+
+    /**
+     * 统计符合条件的数量（不含 LIMIT）
+     */
+    long countByQuery(TaskInstanceQueryParam param);
 }

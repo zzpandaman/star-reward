@@ -144,10 +144,12 @@ mvn spring-boot:run
 
 ### 2. 使用 MyBatis Generator
 
-修改 `generatorConfig.xml` 中的数据库连接和表配置，然后运行：
+修改 `generatorConfig.xml` 中的数据库连接和表配置，**必须从 service 目录执行**：
 ```bash
+cd service
 mvn mybatis-generator:generate
 ```
+配置 itfsw LimitPlugin（startPage=1），Example 自动生成 `limit()`、`page(page, pageSize)` 分页方法，Mapper XML 自动带 LIMIT。
 
 ### 3. 打包
 
