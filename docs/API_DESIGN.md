@@ -237,8 +237,8 @@ interface UpdateTaskTemplateRequest {
         "taskName": "结构化",
         "startTime": 1704067200,
         "endTime": null,
-        "pausedTime": null,
         "totalPausedDuration": 0,
+        "totalExecutionDuration": 0,
         "actualDuration": null,
         "actualReward": 0,
         "status": "running",
@@ -266,8 +266,8 @@ interface TaskExecution {
   taskName: string;
   startTime: number; // 秒级时间戳
   endTime?: number; // 秒级时间戳
-  pausedTime?: number; // 秒级时间戳
   totalPausedDuration: number; // 秒
+  totalExecutionDuration: number; // 秒
   actualDuration?: number; // 分钟
   actualReward: number;
   status: 'running' | 'paused' | 'completed' | 'cancelled';
@@ -355,7 +355,8 @@ interface StartTaskRequest {
     "data": {
       "id": 1,
       "status": "paused",
-      "pausedTime": 1704067800
+      "totalPausedDuration": 0,
+      "totalExecutionDuration": 3600
     }
   }
 }
@@ -363,7 +364,6 @@ interface StartTaskRequest {
 
 **业务规则**:
 - 只有 `running` 状态的任务可以暂停
-- `pausedTime` 设置为当前时间戳（秒级）
 - `status` 更新为 `paused`
 
 **错误响应**:
@@ -395,8 +395,8 @@ interface StartTaskRequest {
     "data": {
       "id": 1,
       "status": "running",
-      "pausedTime": null,
-      "totalPausedDuration": 300
+      "totalPausedDuration": 300,
+      "totalExecutionDuration": 3600
     }
   }
 }
@@ -404,8 +404,7 @@ interface StartTaskRequest {
 
 **业务规则**:
 - 只有 `paused` 状态的任务可以恢复
-- 计算暂停时长：`(当前时间 - pausedTime)`，累加到 `totalPausedDuration`
-- `pausedTime` 清空
+- 本次暂停时长累加到 `totalPausedDuration`
 - `status` 更新为 `running`
 
 **错误响应**:

@@ -7,7 +7,7 @@ import com.star.reward.domain.taskinstance.model.valueobject.ExecutionRecordVO;
 import com.star.reward.domain.taskinstance.model.valueobject.TimeRange;
 
 import java.time.Duration;
-import java.time.ZoneOffset;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +15,6 @@ import java.util.List;
  * 执行记录解析器：将执行记录解析为执行区间
  */
 public final class ExecutionRecordParser {
-
-    private static final ZoneOffset ZONE_OFFSET = ZoneOffset.of("+8");
 
     private ExecutionRecordParser() {
     }
@@ -66,29 +64,14 @@ public final class ExecutionRecordParser {
     }
 
     /**
-     * 获取最近一次暂停时刻（秒级时间戳），仅当最后一条为 PAUSE 时有效
+     * 计算总执行时长（秒）
+     * - END/PAUSE：scoring 区间总秒数
+     * - START/RESUME（running）：区间总秒数 + (now - lastActionTime)
      */
-    public static Long getLastPausedTime(List<ExecutionRecordVO> records) {
+    public static long computeTotalExecutionDuration(List<ExecutionRecordVO> records,
+            LocalDateTime startTime, LocalDateTime now) {
         if (records == null || records.isEmpty()) {
-            return null;
-        }
-        ExecutionRecordVO last = records.get(records.size() - 1);
-        if (last.getAction() != ExecutionAction.PAUSE || last.getActionTime() == null) {
-            return null;
-        }
-        return last.getActionTime().toEpochSecond(ZONE_OFFSET);
-    }
-
-    /**
-     * 计算到最近一次 PAUSE 为止的已执行秒数，仅当最后一条为 PAUSE 时有效
-     */
-    public static Long computeAccumulatedExecutionSeconds(List<ExecutionRecordVO> records) {
-        if (records == null || records.isEmpty()) {
-            return null;
-        }
-        ExecutionRecordVO last = records.get(records.size() - 1);
-        if (last.getAction() != ExecutionAction.PAUSE) {
-            return null;
+            return 0L;
         }
         List<ExecutionInterval> intervals = toExecutionIntervals(records);
         long seconds = 0L;
@@ -96,6 +79,12 @@ public final class ExecutionRecordParser {
             TimeRange range = interval.getRange();
             if (range != null && range.getStart() != null && range.getEnd() != null) {
                 seconds += Duration.between(range.getStart(), range.getEnd()).getSeconds();
+            }
+        }
+        ExecutionRecordVO last = records.get(records.size() - 1);
+        if (last.getAction() == ExecutionAction.START || last.getAction() == ExecutionAction.RESUME) {
+            if (last.getActionTime() != null && now != null) {
+                seconds += Duration.between(last.getActionTime(), now).getSeconds();
             }
         }
         return seconds;

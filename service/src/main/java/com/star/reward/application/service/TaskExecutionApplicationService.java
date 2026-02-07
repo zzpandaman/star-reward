@@ -290,8 +290,8 @@ public class TaskExecutionApplicationService {
                 .createTime(bo.getCreateTime())
                 .executionRecords(records)
                 .totalPausedDuration(ExecutionRecordParser.computeTotalPausedDuration(records))
-                .pausedTime(ExecutionRecordParser.getLastPausedTime(records))
-                .accumulatedExecutionSeconds(ExecutionRecordParser.computeAccumulatedExecutionSeconds(records))
+                .totalExecutionDuration(ExecutionRecordParser.computeTotalExecutionDuration(
+                        records, bo.getStartTime(), LocalDateTime.now()))
                 .build();
 
         if (bo.getInstanceState() == InstanceState.END) {

@@ -56,19 +56,14 @@ public class TaskExecutionResponse {
     private Long endTime;
     
     /**
-     * 暂停时间（秒级时间戳）
-     */
-    private Long pausedTime;
-    
-    /**
      * 总暂停时长（秒）
      */
     private Long totalPausedDuration;
 
     /**
-     * 到最近一次暂停为止的已执行秒数，仅 paused 时有值，前端恢复计时器用
+     * 总执行时长（秒）
      */
-    private Long accumulatedExecutionSeconds;
+    private Long totalExecutionDuration;
     
     /**
      * 实际时长（分钟）
