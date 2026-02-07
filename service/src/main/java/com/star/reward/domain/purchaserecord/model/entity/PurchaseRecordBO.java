@@ -1,5 +1,6 @@
 package com.star.reward.domain.purchaserecord.model.entity;
 
+import com.star.reward.domain.product.model.entity.ProductBO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -131,4 +132,40 @@ public class PurchaseRecordBO {
      * 扩展字段（JSON格式）
      */
     private String attributes;
+
+    /**
+     * 工厂方法：从兑换创建购买记录
+     *
+     * @param product 商品
+     * @param quantity 兑换数量
+     * @param purchaseBy 购买人账号
+     * @param purchaseById 购买人ID
+     * @param purchaseNo 购买记录编号
+     * @param now 创建时间
+     */
+    public static PurchaseRecordBO createFromExchange(ProductBO product, BigDecimal quantity,
+            String purchaseBy, Long purchaseById, String purchaseNo, LocalDateTime now) {
+        return PurchaseRecordBO.builder()
+                .purchaseNo(purchaseNo)
+                .productNo(product.getProductNo())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .minQuantity(product.getMinQuantity())
+                .minUnit(product.getMinUnit())
+                .publishBy(product.getPublishBy())
+                .publishById(product.getPublishById())
+                .purchaseQuantity(quantity.intValue())
+                .purchaseBy(purchaseBy)
+                .purchaseById(purchaseById)
+                .isPreset(false)
+                .isDeleted(false)
+                .createBy(purchaseBy)
+                .createById(purchaseById)
+                .createTime(now)
+                .updateBy(purchaseBy)
+                .updateById(purchaseById)
+                .updateTime(now)
+                .build();
+    }
 }

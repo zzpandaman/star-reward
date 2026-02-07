@@ -145,4 +145,39 @@ public class UserInventoryBO {
                 .createTime(now)
                 .build();
     }
+
+    /**
+     * 工厂方法：创建商品库存
+     *
+     * @param inventoryNo 库存编号
+     * @param name 商品名称
+     * @param description 商品描述
+     * @param quantity 数量
+     * @param unit 单位
+     * @param publishBy 发布人账号
+     * @param publishById 发布人ID
+     * @param belongTo 所属人账号
+     * @param belongToId 所属人ID
+     * @param now 创建时间
+     */
+    public static UserInventoryBO createProductInventory(String inventoryNo, String name, String description,
+            BigDecimal quantity, String unit, String publishBy, Long publishById, String belongTo, Long belongToId,
+            LocalDateTime now) {
+        return UserInventoryBO.builder()
+                .inventoryNo(inventoryNo)
+                .inventoryType(InventoryType.PRODUCT)
+                .name(name)
+                .description(description)
+                .quantity(quantity)
+                .unit(unit)
+                .publishBy(publishBy)
+                .publishById(publishById)
+                .belongTo(belongTo)
+                .belongToId(belongToId)
+                .isDeleted(false)
+                .createBy(belongTo)
+                .createById(belongToId)
+                .createTime(now)
+                .build();
+    }
 }

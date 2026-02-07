@@ -11,9 +11,6 @@ public final class UserInventoryConstants {
     /** 库存编号前缀 */
     public static final String INVENTORY_NO_PREFIX = "INV";
 
-    /** 记录编号前缀 */
-    public static final String RECORD_NO_PREFIX = "REC";
-
     /** 积分库存默认名称 */
     public static final String POINT_INVENTORY_NAME = "积分";
 

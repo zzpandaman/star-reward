@@ -1,20 +1,19 @@
-package com.star.reward.domain.userinventory.service;
+package com.star.reward.domain.purchaserecord.service;
 
 import com.star.common.exception.BusinessException;
 import com.star.common.result.ResultCode;
 import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.domain.product.repository.ProductRepository;
+import com.star.reward.domain.purchaserecord.model.constant.PurchaseRecordConstants;
 import com.star.reward.domain.purchaserecord.model.entity.PurchaseRecordBO;
 import com.star.reward.domain.purchaserecord.repository.PurchaseRecordRepository;
+import com.star.reward.domain.shared.util.RewardNoGenerator;
+import com.star.reward.domain.userinventory.model.constant.UserInventoryConstants;
 import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.star.reward.domain.shared.util.RewardNoGenerator;
-import com.star.reward.domain.userinventory.model.constant.UserInventoryConstants;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,120 +25,93 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ExchangeService {
-    
-    private final PointService pointService;
+
     private final ProductRepository productRepository;
     private final UserInventoryRepository userInventoryRepository;
     private final PurchaseRecordRepository purchaseRecordRepository;
-    
+
     /**
      * 兑换商品
+     *
+     * @param userId 用户ID
+     * @param userNo 用户账号
+     * @param productId 商品ID
+     * @param quantity 兑换数量（可为空，默认最小购买数量）
+     * @return 兑换结果
      */
-    @Transactional
     public ExchangeResult exchange(Long userId, String userNo, Long productId, BigDecimal quantity) {
-        // 获取商品信息
         ProductBO product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "商品不存在"));
-        
-        // 计算兑换数量（默认为最小购买数量）
+
         if (quantity == null) {
             quantity = product.getMinQuantity();
         }
-        
-        // 计算所需积分
+
         BigDecimal pointsRequired = product.getPrice().multiply(quantity);
-        
-        // 检查并扣除积分
-        if (!pointService.deductPoints(userId, userNo, pointsRequired)) {
+
+        List<UserInventoryBO> pointInventories = userInventoryRepository
+                .findByBelongToIdAndType(userId, InventoryType.POINT);
+
+        if (pointInventories.isEmpty()) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "积分不足");
         }
-        
-        // 添加商品到背包
+
+        UserInventoryBO pointInventory = pointInventories.get(0);
+        if (pointInventory.getQuantity().compareTo(pointsRequired) < 0) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "积分不足");
+        }
+
+        pointInventory.setQuantity(pointInventory.getQuantity().subtract(pointsRequired));
+        pointInventory.setUpdateBy(userNo);
+        pointInventory.setUpdateById(userId);
+        pointInventory.setUpdateTime(LocalDateTime.now());
+        userInventoryRepository.update(pointInventory);
+
         addProductToInventory(userId, userNo, product, quantity);
-        
-        // 创建购买记录
         createPurchaseRecord(userId, userNo, product, quantity);
-        
-        // 获取剩余积分
-        BigDecimal remainingPoints = pointService.getUserPoints(userId);
-        
+
         return ExchangeResult.builder()
                 .product(product)
                 .quantity(quantity)
                 .pointsSpent(pointsRequired)
-                .remainingPoints(remainingPoints)
+                .remainingPoints(pointInventory.getQuantity())
                 .build();
     }
-    
-    /**
-     * 添加商品到背包
-     */
+
     private void addProductToInventory(Long userId, String userNo, ProductBO product, BigDecimal quantity) {
-        // 查找是否已有该商品
         List<UserInventoryBO> existingInventories = userInventoryRepository
                 .findByBelongToIdAndType(userId, InventoryType.PRODUCT);
-        
+
         UserInventoryBO existingInventory = existingInventories.stream()
                 .filter(inv -> product.getName().equals(inv.getName()))
                 .findFirst()
                 .orElse(null);
-        
+
         if (existingInventory != null) {
-            // 更新数量
             existingInventory.setQuantity(existingInventory.getQuantity().add(quantity));
             existingInventory.setUpdateBy(userNo);
             existingInventory.setUpdateById(userId);
             existingInventory.setUpdateTime(LocalDateTime.now());
             userInventoryRepository.update(existingInventory);
         } else {
-            // 创建新库存
-            UserInventoryBO inventory = UserInventoryBO.builder()
-                    .inventoryNo(RewardNoGenerator.generate(UserInventoryConstants.INVENTORY_NO_PREFIX))
-                    .inventoryType(InventoryType.PRODUCT)
-                    .name(product.getName())
-                    .description(product.getDescription())
-                    .quantity(quantity)
-                    .unit(product.getMinUnit())
-                    .publishBy(product.getPublishBy())
-                    .publishById(product.getPublishById())
-                    .belongTo(userNo)
-                    .belongToId(userId)
-                    .isDeleted(false)
-                    .createBy(userNo)
-                    .createById(userId)
-                    .createTime(LocalDateTime.now())
-                    .build();
+            UserInventoryBO inventory = UserInventoryBO.createProductInventory(
+                    RewardNoGenerator.generate(UserInventoryConstants.INVENTORY_NO_PREFIX),
+                    product.getName(), product.getDescription(), quantity, product.getMinUnit(),
+                    product.getPublishBy(), product.getPublishById(), userNo, userId, LocalDateTime.now());
             userInventoryRepository.save(inventory);
         }
     }
-    
-    /**
-     * 创建购买记录
-     */
+
     private void createPurchaseRecord(Long userId, String userNo, ProductBO product, BigDecimal quantity) {
-        PurchaseRecordBO record = PurchaseRecordBO.builder()
-                .purchaseNo(RewardNoGenerator.generate(UserInventoryConstants.RECORD_NO_PREFIX))
-                .productNo(product.getProductNo())
-                .name(product.getName())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .minQuantity(product.getMinQuantity())
-                .minUnit(product.getMinUnit())
-                .publishBy(product.getPublishBy())
-                .publishById(product.getPublishById())
-                .purchaseQuantity(quantity.intValue())
-                .purchaseBy(userNo)
-                .purchaseById(userId)
-                .isDeleted(false)
-                .createBy(userNo)
-                .createById(userId)
-                .createTime(LocalDateTime.now())
-                .build();
+        String purchaseNo = RewardNoGenerator.generate(PurchaseRecordConstants.PURCHASE_NO_PREFIX);
+        LocalDateTime now = LocalDateTime.now();
+        PurchaseRecordBO record = PurchaseRecordBO.createFromExchange(
+                product, quantity, userNo, userId, purchaseNo, now);
         purchaseRecordRepository.save(record);
     }
-    
+
     /**
-     * 兑换结果
+     * 兑换结果（领域层）
      */
     @lombok.Data
     @lombok.Builder
