@@ -31,11 +31,11 @@
 
 ### 1.1 获取所有任务模板
 
-**接口**: `GET /api/reward/task-templates`
+**接口**: `POST /api/reward/task-templates/query`
 
 **说明**: 获取所有任务模板（包括预设和自定义）
 
-**请求参数**: 无
+**请求体**: 可选，`{ "page": 1, "pageSize": 10, "templateNo", "isPreset", "isDeleted", "orderBy" }`
 
 **响应示例**:
 
@@ -129,17 +129,15 @@ interface CreateTaskTemplateRequest {
 
 ### 1.3 更新任务模板
 
-**接口**: `PUT /api/reward/task-templates/:id`
+**接口**: `POST /api/reward/task-templates/update`
 
 **说明**: 更新任务模板（仅支持自定义任务）
-
-**路径参数**:
-- `id`: 任务模板ID
 
 **请求体**:
 
 ```json
 {
+  "id": 2,
   "name": "更新后的任务名称",
   "description": "更新后的描述"
 }
@@ -149,6 +147,7 @@ interface CreateTaskTemplateRequest {
 
 ```typescript
 interface UpdateTaskTemplateRequest {
+  id: number;
   name?: string;
   description?: string;
 }
@@ -180,12 +179,15 @@ interface UpdateTaskTemplateRequest {
 
 ### 1.4 删除任务模板
 
-**接口**: `DELETE /api/reward/task-templates/:id`
+**接口**: `POST /api/reward/task-templates/delete`
 
 **说明**: 删除任务模板（仅支持自定义任务）
 
-**路径参数**:
-- `id`: 任务模板ID
+**请求体**:
+
+```json
+{ "id": 2 }
+```
 
 **响应示例**:
 
@@ -216,11 +218,11 @@ interface UpdateTaskTemplateRequest {
 
 ### 2.1 获取所有任务执行记录
 
-**接口**: `GET /api/reward/task-executions`
+**接口**: `POST /api/reward/task-executions`
 
 **说明**: 获取所有任务执行记录
 
-**请求参数**: 无
+**请求体**: 可选，`{ "page": 1, "pageSize": 10, "state": "ongoing|running|paused|all" }`
 
 **响应示例**:
 
@@ -339,12 +341,15 @@ interface StartTaskRequest {
 
 ### 2.3 暂停任务
 
-**接口**: `POST /api/reward/task-executions/:id/pause`
+**接口**: `POST /api/reward/task-executions/pause`
 
 **说明**: 暂停正在运行的任务
 
-**路径参数**:
-- `id`: 任务执行记录ID
+**请求体**:
+
+```json
+{ "id": 1, "clientTime": 1704067200 }
+```
 
 **响应示例**:
 
@@ -379,12 +384,15 @@ interface StartTaskRequest {
 
 ### 2.4 恢复任务
 
-**接口**: `POST /api/reward/task-executions/:id/resume`
+**接口**: `POST /api/reward/task-executions/resume`
 
 **说明**: 恢复已暂停的任务
 
-**路径参数**:
-- `id`: 任务执行记录ID
+**请求体**:
+
+```json
+{ "id": 1, "clientTime": 1704067200 }
+```
 
 **响应示例**:
 
@@ -420,12 +428,15 @@ interface StartTaskRequest {
 
 ### 2.5 完成任务
 
-**接口**: `POST /api/reward/task-executions/:id/complete`
+**接口**: `POST /api/reward/task-executions/complete`
 
 **说明**: 完成任务并计算积分
 
-**路径参数**:
-- `id`: 任务执行记录ID
+**请求体**:
+
+```json
+{ "id": 1, "clientTime": 1704070800 }
+```
 
 **响应示例**:
 
@@ -476,12 +487,15 @@ interface CompleteTaskResponse {
 
 ### 2.6 取消任务
 
-**接口**: `POST /api/reward/task-executions/:id/cancel`
+**接口**: `POST /api/reward/task-executions/cancel`
 
 **说明**: 取消任务（不获得积分）
 
-**路径参数**:
-- `id`: 任务执行记录ID
+**请求体**:
+
+```json
+{ "id": 1, "clientTime": 1704070800 }
+```
 
 **响应示例**:
 
@@ -511,11 +525,11 @@ interface CompleteTaskResponse {
 
 ### 3.1 获取所有商品
 
-**接口**: `GET /api/reward/products`
+**接口**: `POST /api/reward/products/query`
 
 **说明**: 获取所有商品（包括预设和自定义）
 
-**请求参数**: 无
+**请求体**: 可选，分页及筛选参数
 
 **响应示例**:
 
@@ -625,17 +639,15 @@ interface CreateProductRequest {
 
 ### 3.3 更新商品
 
-**接口**: `PUT /api/reward/products/:id`
+**接口**: `POST /api/reward/products/update`
 
 **说明**: 更新商品（仅支持自定义商品）
-
-**路径参数**:
-- `id`: 商品ID
 
 **请求体**:
 
 ```json
 {
+  "id": 2,
   "name": "更新后的商品名称",
   "description": "更新后的描述",
   "price": 12,
@@ -648,6 +660,7 @@ interface CreateProductRequest {
 
 ```typescript
 interface UpdateProductRequest {
+  id: number;
   name?: string;
   description?: string;
   price?: number;
@@ -685,12 +698,15 @@ interface UpdateProductRequest {
 
 ### 3.4 删除商品
 
-**接口**: `DELETE /api/reward/products/:id`
+**接口**: `POST /api/reward/products/delete`
 
 **说明**: 删除商品（仅支持自定义商品）
 
-**路径参数**:
-- `id`: 商品ID
+**请求体**:
+
+```json
+{ "id": 2 }
+```
 
 **响应示例**:
 
@@ -805,7 +821,9 @@ Reward Service 需要调用 user-service 的以下接口：
 
 ```bash
 # 获取所有任务模板
-curl -X GET http://localhost:8080/api/reward/task-templates
+curl -X POST http://localhost:8080/api/reward/task-templates/query \
+  -H "Content-Type: application/json" \
+  -d '{}'
 
 # 创建任务模板
 curl -X POST http://localhost:8080/api/reward/task-templates \
@@ -819,14 +837,19 @@ curl -X POST http://localhost:8080/api/reward/task-templates \
 curl -X POST http://localhost:8080/api/reward/task-executions/start \
   -H "Content-Type: application/json" \
   -d '{
-    "taskTemplateId": 1
+    "taskTemplateId": 1,
+    "clientTime": 1704067200
   }'
 
 # 完成任务
-curl -X POST http://localhost:8080/api/reward/task-executions/1/complete
+curl -X POST http://localhost:8080/api/reward/task-executions/complete \
+  -H "Content-Type: application/json" \
+  -d '{"id": 1, "clientTime": 1704070800}'
 
 # 获取所有商品
-curl -X GET http://localhost:8080/api/reward/products
+curl -X POST http://localhost:8080/api/reward/products/query \
+  -H "Content-Type: application/json" \
+  -d '{}'
 ```
 
 ### 6.2 使用 TypeScript/JavaScript

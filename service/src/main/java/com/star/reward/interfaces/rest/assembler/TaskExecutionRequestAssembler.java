@@ -26,9 +26,12 @@ public final class TaskExecutionRequestAssembler {
         return cmd;
     }
 
-    public static TaskOperationCommand requestToTaskOperationCommand(Long id, TaskOperationRequest request) {
+    public static TaskOperationCommand requestToTaskOperationCommand(TaskOperationRequest request) {
+        if (request == null) {
+            return null;
+        }
         TaskOperationCommand cmd = new TaskOperationCommand();
-        cmd.setId(id);
+        cmd.setId(request.getId());
         cmd.setClientTime(request.getClientTime());
         return cmd;
     }

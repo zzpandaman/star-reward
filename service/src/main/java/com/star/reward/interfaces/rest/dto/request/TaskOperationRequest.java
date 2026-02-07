@@ -6,10 +6,12 @@ import javax.validation.constraints.NotNull;
 
 /**
  * 任务操作请求（暂停/恢复/完成/取消）
- * clientTime 为前端时间戳（秒级），用于减少网络延迟对操作时间的影响
  */
 @Data
 public class TaskOperationRequest {
+
+    @NotNull(message = "任务执行ID不能为空")
+    private Long id;
 
     /**
      * 前端操作时间（秒级时间戳），必传

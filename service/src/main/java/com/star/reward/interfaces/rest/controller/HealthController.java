@@ -1,7 +1,10 @@
 package com.star.reward.interfaces.rest.controller;
 
 import com.star.common.result.Result;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.star.reward.interfaces.rest.dto.request.EmptyRequest;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/reward")
 public class HealthController {
 
-    @GetMapping("/health")
-    public Result<String> health() {
+    @PostMapping("/health")
+    public Result<String> health(@Validated @RequestBody EmptyRequest request) {
         return Result.success("OK");
     }
 }

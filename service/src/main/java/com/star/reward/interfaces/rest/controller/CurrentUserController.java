@@ -2,12 +2,15 @@ package com.star.reward.interfaces.rest.controller;
 
 import com.star.common.result.Result;
 import com.star.common.result.ResultCode;
+import com.star.reward.interfaces.rest.dto.request.EmptyRequest;
 import com.star.reward.shared.context.CurrentUserContext;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,17 +22,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class CurrentUserController {
-    
+
     /**
      * 获取当前登录用户信息
      */
-    @GetMapping("/current-user")
-    public Result<CurrentUserInfo> getCurrentUser() {
+    @PostMapping("/current-user")
+    public Result<CurrentUserInfo> getCurrentUser(@Validated @RequestBody EmptyRequest request) {
         CurrentUserContext context = CurrentUserContext.get();
         if (context == null) {
             return Result.fail(ResultCode.UNAUTHORIZED);
         }
-        
+
         CurrentUserInfo userInfo = CurrentUserInfo.builder()
                 .userNo(context.getUserNo())
                 .userId(context.getUserId())
@@ -37,10 +40,10 @@ public class CurrentUserController {
                 .roles(context.getRoles())
                 .permissions(context.getPermissions())
                 .build();
-        
+
         return Result.success(userInfo);
     }
-    
+
     /**
      * 当前用户信息
      */

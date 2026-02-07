@@ -5,12 +5,18 @@ import com.star.common.result.Result;
 import com.star.reward.application.service.ProductApplicationService;
 import com.star.reward.interfaces.rest.assembler.ProductRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.CreateProductRequest;
+import com.star.reward.interfaces.rest.dto.request.IdRequest;
 import com.star.reward.interfaces.rest.dto.request.ProductQueryRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateProductRequest;
 import com.star.reward.interfaces.rest.dto.response.ProductResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 商品控制器
@@ -19,9 +25,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/reward/products")
 @RequiredArgsConstructor
 public class ProductController {
-    
+
     private final ProductApplicationService productApplicationService;
-    
+
     /**
      * 分页查询商品（POST JSON 传参）
      */
@@ -32,7 +38,7 @@ public class ProductController {
                 ProductRequestAssembler.requestToQueryCommand(request));
         return Result.success(response);
     }
-    
+
     /**
      * 根据ID获取商品
      */
@@ -41,33 +47,33 @@ public class ProductController {
         ProductResponse response = productApplicationService.getProductById(id);
         return Result.success(response);
     }
-    
+
     /**
      * 创建商品
      */
     @PostMapping
     public Result<ProductResponse> createProduct(@Validated @RequestBody CreateProductRequest request) {
-        ProductResponse response = productApplicationService.createProduct(ProductRequestAssembler.requestToCreateCommand(request));
+        ProductResponse response = productApplicationService.createProduct(
+                ProductRequestAssembler.requestToCreateCommand(request));
         return Result.success(response);
     }
-    
+
     /**
      * 更新商品
      */
-    @PutMapping("/{id}")
-    public Result<ProductResponse> updateProduct(
-            @PathVariable Long id,
-            @RequestBody UpdateProductRequest request) {
-        ProductResponse response = productApplicationService.updateProduct(id, ProductRequestAssembler.requestToUpdateCommand(request));
+    @PostMapping("/update")
+    public Result<ProductResponse> updateProduct(@Validated @RequestBody UpdateProductRequest request) {
+        ProductResponse response = productApplicationService.updateProduct(request.getId(),
+                ProductRequestAssembler.requestToUpdateCommand(request));
         return Result.success(response);
     }
-    
+
     /**
      * 删除商品
      */
-    @DeleteMapping("/{id}")
-    public Result<Void> deleteProduct(@PathVariable Long id) {
-        productApplicationService.deleteProduct(id);
+    @PostMapping("/delete")
+    public Result<Void> deleteProduct(@Validated @RequestBody IdRequest request) {
+        productApplicationService.deleteProduct(request.getId());
         return Result.success();
     }
 }

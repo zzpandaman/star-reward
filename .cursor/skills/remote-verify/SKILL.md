@@ -34,7 +34,7 @@ Verifies server deployment for a single service. Use ssh-server-deploy for SSH e
 
 3. **Health check** (use SERVER_URL from deploy-server.sh or user-provided):
    - `curl -s -o /dev/null -w "%{http_code}" ${SERVER_URL}/api/sso/health`
-   - `curl -s -o /dev/null -w "%{http_code}" ${SERVER_URL}/api/reward/health`
+   - `curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{}' ${SERVER_URL}/api/reward/health`
    - `curl -s -o /dev/null -w "%{http_code}" ${SERVER_URL}/star/`
    - `curl -s -o /dev/null -w "%{http_code}" ${SERVER_URL}/health`
 

@@ -2,6 +2,7 @@ package com.star.reward.interfaces.rest.dto.request;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 
@@ -10,6 +11,9 @@ import java.math.BigDecimal;
  */
 @Data
 public class UpdateProductRequest {
+
+    @NotNull(message = "id 不能为空")
+    private Long id;
     
     /**
      * 商品名称

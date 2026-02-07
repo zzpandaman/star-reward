@@ -10,7 +10,12 @@ import com.star.reward.interfaces.rest.dto.request.TaskOperationRequest;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 任务执行控制器
@@ -19,9 +24,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/reward/task-executions")
 @RequiredArgsConstructor
 public class TaskExecutionController {
-    
+
     private final TaskExecutionApplicationService taskExecutionApplicationService;
-    
+
     /**
      * 根据实例编号获取任务执行详情
      */
@@ -33,89 +38,64 @@ public class TaskExecutionController {
     }
 
     /**
-     * 获取任务执行列表（GET，query 参数）
-     *
-     * @param state 状态过滤：ongoing|running|paused|all，默认 ongoing
-     * @param page 页码，默认 1
-     * @param pageSize 每页条数，默认 10
+     * 获取任务执行列表
+     * 参数：page(默认1)、pageSize(默认10)、state(ongoing|running|paused|all，默认ongoing)
      */
-    @GetMapping
-    public Result<PageResponse<TaskExecutionResponse>> getTaskExecutionsGet(
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer pageSize) {
-        TaskExecutionQueryRequest request = new TaskExecutionQueryRequest();
-        request.setState(state != null ? state : "ongoing");
-        request.setPage(page != null && page > 0 ? page : 1);
-        request.setPageSize(pageSize != null && pageSize > 0 ? pageSize : 10);
+    @PostMapping
+    public Result<PageResponse<TaskExecutionResponse>> getTaskExecutions(
+            @RequestBody(required = false) TaskExecutionQueryRequest request) {
         PageResponse<TaskExecutionResponse> response = taskExecutionApplicationService
                 .getTaskExecutions(TaskExecutionRequestAssembler.requestToQueryCommand(request));
         return Result.success(response);
     }
 
     /**
-     * 获取任务执行列表（POST，Request body）
-     *
-     * @param request 查询参数：page(默认1)、pageSize(默认10)、state(ongoing|running|paused|all，默认ongoing)
-     */
-    @PostMapping
-    public Result<PageResponse<TaskExecutionResponse>> getTaskExecutions(
-            @RequestBody TaskExecutionQueryRequest request) {
-        PageResponse<TaskExecutionResponse> response = taskExecutionApplicationService
-                .getTaskExecutions(TaskExecutionRequestAssembler.requestToQueryCommand(request));
-        return Result.success(response);
-    }
-    
-    /**
      * 开始任务
      */
     @PostMapping("/start")
     public Result<TaskExecutionResponse> startTask(@Validated @RequestBody StartTaskRequest request) {
-        TaskExecutionResponse response = taskExecutionApplicationService.startTask(TaskExecutionRequestAssembler.requestToStartCommand(request));
+        TaskExecutionResponse response = taskExecutionApplicationService.startTask(
+                TaskExecutionRequestAssembler.requestToStartCommand(request));
         return Result.success(response);
     }
-    
+
     /**
      * 暂停任务
      */
-    @PostMapping("/{id}/pause")
-    public Result<TaskExecutionResponse> pauseTask(@PathVariable Long id,
-            @Validated @RequestBody TaskOperationRequest request) {
+    @PostMapping("/pause")
+    public Result<TaskExecutionResponse> pauseTask(@Validated @RequestBody TaskOperationRequest request) {
         TaskExecutionResponse response = taskExecutionApplicationService.pauseTask(
-                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(request));
         return Result.success(response);
     }
 
     /**
      * 恢复任务
      */
-    @PostMapping("/{id}/resume")
-    public Result<TaskExecutionResponse> resumeTask(@PathVariable Long id,
-            @Validated @RequestBody TaskOperationRequest request) {
+    @PostMapping("/resume")
+    public Result<TaskExecutionResponse> resumeTask(@Validated @RequestBody TaskOperationRequest request) {
         TaskExecutionResponse response = taskExecutionApplicationService.resumeTask(
-                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(request));
         return Result.success(response);
     }
 
     /**
      * 完成任务
      */
-    @PostMapping("/{id}/complete")
-    public Result<TaskExecutionResponse> completeTask(@PathVariable Long id,
-            @Validated @RequestBody TaskOperationRequest request) {
+    @PostMapping("/complete")
+    public Result<TaskExecutionResponse> completeTask(@Validated @RequestBody TaskOperationRequest request) {
         TaskExecutionResponse response = taskExecutionApplicationService.completeTask(
-                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(request));
         return Result.success(response);
     }
 
     /**
      * 取消任务
      */
-    @PostMapping("/{id}/cancel")
-    public Result<TaskExecutionResponse> cancelTask(@PathVariable Long id,
-            @Validated @RequestBody TaskOperationRequest request) {
+    @PostMapping("/cancel")
+    public Result<TaskExecutionResponse> cancelTask(@Validated @RequestBody TaskOperationRequest request) {
         TaskExecutionResponse response = taskExecutionApplicationService.cancelTask(
-                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(request));
         return Result.success(response);
     }
 }

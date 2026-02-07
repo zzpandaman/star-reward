@@ -143,7 +143,7 @@ ssh myServer "tail -f /opt/star-deploy/logs/star-reward/star-reward-service.log"
 ## 健康检查
 
 ```bash
-curl http://服务器IP/api/reward/health
+curl -X POST -H "Content-Type: application/json" -d '{}' http://服务器IP/api/reward/health
 curl http://服务器IP/health
 ```
 
@@ -166,7 +166,7 @@ curl http://服务器IP/health
 1. **容器状态**：`docker ps` 确认 star-sso/star-reward 运行
 2. **容器日志**：`docker logs star-sso` / `docker logs star-reward` 查看崩溃或错误
 3. **MySQL 权限**：MySQL 在宿主机时需 `root@127.0.0.1` 授权，否则 Access denied
-4. **nginx 访问后端**：`docker exec star-nginx curl http://host.docker.internal:8081/api/sso/health` 验证
+4. **nginx 访问后端**：`docker exec star-nginx curl http://host.docker.internal:8081/api/sso/health`、`docker exec star-nginx curl -X POST -H "Content-Type: application/json" -d '{}' http://host.docker.internal:8081/api/reward/health` 验证
 5. **健康端点**：`curl http://服务器IP/api/sso/health` 验证
 
 ## 注意事项

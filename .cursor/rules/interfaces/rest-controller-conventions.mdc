@@ -1,0 +1,68 @@
+---
+description: REST Controller 接口规范（HTTP 方法、传参、校验）
+globs: "**/interfaces/rest/**/*.java"
+alwaysApply: false
+---
+
+# REST Controller 接口规范
+
+## HTTP 方法
+
+- **禁止使用 GET**（仅允许「根据单号/ID 查详情」的接口保留 GET）
+- 查询、创建、更新、删除等均使用 POST
+
+## 传参
+
+- POST 传参**禁止** `@PathVariable`，全部通过 `@RequestBody` JSON 解析
+- 单号/ID 等标识符放入 Request DTO 内
+
+## 校验（@Validated / @Valid）
+
+### Controller 方法
+
+- 写操作：`@Validated @RequestBody` 或 `@Valid @RequestBody`，配合 DTO 内 `@NotNull` / `@NotBlank` 等
+- 查询接口：`@RequestBody(required = false)`，若 Request 有校验则加 `@Validated`
+- 验证组：`@Validated(groups = Xxx.class)`
+
+### Body 必传
+
+- 写操作**禁止** `@RequestBody(required = false)`，否则不传 body 时参数为 null、无法校验
+- 无参 POST（如 /points、/inventory、/health）：使用空 DTO（如 `EmptyRequest`）且 `@RequestBody` 默认 required=true，不传 body 会返回 400
+
+### 嵌套对象与集合
+
+- DTO 内嵌套字段**必须**加 `@Valid` 才能级联校验。`@Validated` 不会触发嵌套校验
+- 集合元素：`@Valid List<Xxx> items` 或 `List<@Valid Xxx> items`
+
+```java
+// 嵌套对象
+@Valid
+@NotNull
+private AddressDto address;
+
+// 集合元素
+@Valid
+private List<OrderItemDto> items;
+```
+
+## 示例
+
+```java
+// 写操作 - body 必传，@Validated
+@PostMapping("/update")
+public Result<XxxResponse> update(@Validated @RequestBody UpdateXxxRequest request) {
+    return Result.success(applicationService.update(request.getId(), assembler.requestToCommand(request)));
+}
+
+// 查询 - required=false
+@PostMapping("/query")
+public Result<PageResponse<Xxx>> query(@RequestBody(required = false) XxxQueryRequest request) {
+    return Result.success(applicationService.query(assembler.requestToCommand(request)));
+}
+
+// 无参 POST - 空 DTO 保证 body 必传
+@PostMapping("/points")
+public Result<UserPointsResponse> getPoints(@Validated @RequestBody EmptyRequest request) {
+    return Result.success(applicationService.getUserPoints());
+}
+```

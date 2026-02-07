@@ -25,7 +25,7 @@ Verifies local deployment for a single service in star-deploy-local. Use when de
 
 3. **Health check**:
    - SSO: `curl -s -o /dev/null -w "%{http_code}" http://localhost/api/sso/health` (expect 200)
-   - Reward: `curl -s -o /dev/null -w "%{http_code}" http://localhost/api/reward/health` (expect 200)
+   - Reward: `curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{}' http://localhost/api/reward/health` (expect 200)
    - Frontend: `curl -s -o /dev/null -w "%{http_code}" http://localhost/star/` (expect 200)
    - Nginx: `curl -s -o /dev/null -w "%{http_code}" http://localhost/health` (expect 200)
 
