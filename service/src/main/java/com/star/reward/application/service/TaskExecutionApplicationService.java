@@ -27,6 +27,7 @@ import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import com.star.reward.application.assembler.TaskExecutionAssembler;
 import com.star.reward.application.command.StartTaskCommand;
 import com.star.reward.application.command.TaskExecutionQueryCommand;
+import com.star.reward.application.command.TaskOperationCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import com.star.reward.shared.context.CurrentUserContext;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ import com.star.reward.domain.taskinstance.model.constant.TaskInstanceConstants;
 import com.star.reward.domain.userinventory.model.constant.UserInventoryConstants;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -89,6 +91,13 @@ public class TaskExecutionApplicationService {
         return PageResponse.of(responses, total, param);
     }
 
+    private LocalDateTime resolveOperationTime(Long clientTime) {
+        if (clientTime == null) {
+            return LocalDateTime.now();
+        }
+        return LocalDateTime.ofInstant(Instant.ofEpochSecond(clientTime), ZoneOffset.of("+8"));
+    }
+
     private Set<InstanceState> resolveStateFilter(String state) {
         if (state == null || state.isEmpty()) {
             return EnumSet.of(InstanceState.RUNNING, InstanceState.PAUSED);
@@ -127,7 +136,7 @@ public class TaskExecutionApplicationService {
         TaskTemplateBO template = taskTemplateRepository.findById(command.getTaskTemplateId())
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务模板不存在"));
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = resolveOperationTime(command.getClientTime());
         TaskInstanceBO instance = TaskInstanceBO.createFromTemplate(template,
                 RewardNoGenerator.generate(TaskInstanceConstants.INSTANCE_NO_PREFIX),
                 user.getUserNo(), user.getUserId(), now);
@@ -140,8 +149,8 @@ public class TaskExecutionApplicationService {
      * 暂停任务
      */
     @Transactional
-    public TaskExecutionResponse pauseTask(Long id) {
-        TaskInstanceBO instance = taskInstanceRepository.findById(id)
+    public TaskExecutionResponse pauseTask(TaskOperationCommand command) {
+        TaskInstanceBO instance = taskInstanceRepository.findById(command.getId())
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
 
         if (instance.getInstanceState() != InstanceState.RUNNING) {
@@ -149,7 +158,7 @@ public class TaskExecutionApplicationService {
                     ResultCode.TASK_NOT_RUNNING.getMessage());
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = resolveOperationTime(command.getClientTime());
         instance.setInstanceState(InstanceState.PAUSED);
         instance.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.PAUSE, now));
         instance.setUpdateTime(now);
@@ -162,8 +171,8 @@ public class TaskExecutionApplicationService {
      * 恢复任务
      */
     @Transactional
-    public TaskExecutionResponse resumeTask(Long id) {
-        TaskInstanceBO instance = taskInstanceRepository.findById(id)
+    public TaskExecutionResponse resumeTask(TaskOperationCommand command) {
+        TaskInstanceBO instance = taskInstanceRepository.findById(command.getId())
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
 
         if (instance.getInstanceState() != InstanceState.PAUSED) {
@@ -171,7 +180,7 @@ public class TaskExecutionApplicationService {
                     ResultCode.TASK_NOT_PAUSED.getMessage());
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = resolveOperationTime(command.getClientTime());
         instance.setInstanceState(InstanceState.RUNNING);
         instance.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.RESUME, now));
         instance.setUpdateTime(now);
@@ -184,17 +193,17 @@ public class TaskExecutionApplicationService {
      * 完成任务
      */
     @Transactional
-    public TaskExecutionResponse completeTask(Long id) {
+    public TaskExecutionResponse completeTask(TaskOperationCommand command) {
         CurrentUserContext user = CurrentUserContext.get();
 
-        TaskInstanceBO instance = taskInstanceRepository.findById(id)
+        TaskInstanceBO instance = taskInstanceRepository.findById(command.getId())
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
 
         if (instance.getInstanceState() == InstanceState.END) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "任务已结束");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = resolveOperationTime(command.getClientTime());
         instance.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.END, now));
         instance.setEndTime(now);
         instance.setInstanceState(InstanceState.END);
@@ -234,15 +243,15 @@ public class TaskExecutionApplicationService {
      * 取消任务
      */
     @Transactional
-    public TaskExecutionResponse cancelTask(Long id) {
-        TaskInstanceBO instance = taskInstanceRepository.findById(id)
+    public TaskExecutionResponse cancelTask(TaskOperationCommand command) {
+        TaskInstanceBO instance = taskInstanceRepository.findById(command.getId())
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
 
         if (instance.getInstanceState() == InstanceState.END) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "任务已结束");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = resolveOperationTime(command.getClientTime());
         instance.setEndTime(now);
         instance.setInstanceState(InstanceState.END);
         instance.setUpdateTime(now);

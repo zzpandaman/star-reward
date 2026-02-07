@@ -3,12 +3,12 @@ package com.star.reward.application.command;
 import lombok.Data;
 
 /**
- * 开始任务用例入参
+ * 任务操作用例入参（暂停/恢复/完成/取消）
  */
 @Data
-public class StartTaskCommand {
+public class TaskOperationCommand {
 
-    private Long taskTemplateId;
+    private Long id;
 
     /**
      * 前端操作时间（秒级时间戳），可选

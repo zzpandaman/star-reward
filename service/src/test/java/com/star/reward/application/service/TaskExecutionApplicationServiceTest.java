@@ -16,6 +16,7 @@ import com.star.reward.domain.pointrecord.repository.PointRecordRepository;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import com.star.reward.application.command.StartTaskCommand;
 import com.star.reward.application.command.TaskExecutionQueryCommand;
+import com.star.reward.application.command.TaskOperationCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import com.star.reward.shared.context.CurrentUserContext;
 import org.junit.jupiter.api.AfterEach;
@@ -104,6 +105,7 @@ class TaskExecutionApplicationServiceTest {
 
         StartTaskCommand command = new StartTaskCommand();
         command.setTaskTemplateId(TEMPLATE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
 
         TaskExecutionResponse response = service.startTask(command);
 
@@ -127,6 +129,7 @@ class TaskExecutionApplicationServiceTest {
 
         StartTaskCommand command = new StartTaskCommand();
         command.setTaskTemplateId(TEMPLATE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
 
         assertThatThrownBy(() -> service.startTask(command))
                 .isInstanceOf(BusinessException.class)
@@ -140,7 +143,10 @@ class TaskExecutionApplicationServiceTest {
         when(taskInstanceRepository.findById(INSTANCE_ID)).thenReturn(Optional.of(instance));
         when(taskInstanceRepository.update(any(TaskInstanceBO.class))).thenAnswer(i -> i.getArgument(0));
 
-        TaskExecutionResponse response = service.pauseTask(INSTANCE_ID);
+        TaskOperationCommand command = new TaskOperationCommand();
+        command.setId(INSTANCE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
+        TaskExecutionResponse response = service.pauseTask(command);
 
         ArgumentCaptor<TaskInstanceBO> captor = ArgumentCaptor.forClass(TaskInstanceBO.class);
         verify(taskInstanceRepository).update(captor.capture());
@@ -154,7 +160,10 @@ class TaskExecutionApplicationServiceTest {
         TaskInstanceBO instance = createPausedInstance();
         when(taskInstanceRepository.findById(INSTANCE_ID)).thenReturn(Optional.of(instance));
 
-        assertThatThrownBy(() -> service.pauseTask(INSTANCE_ID))
+        TaskOperationCommand command = new TaskOperationCommand();
+        command.setId(INSTANCE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
+        assertThatThrownBy(() -> service.pauseTask(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ResultCode.TASK_NOT_RUNNING.getMessage());
         verify(taskInstanceRepository, never()).update(any());
@@ -166,7 +175,10 @@ class TaskExecutionApplicationServiceTest {
         when(taskInstanceRepository.findById(INSTANCE_ID)).thenReturn(Optional.of(instance));
         when(taskInstanceRepository.update(any(TaskInstanceBO.class))).thenAnswer(i -> i.getArgument(0));
 
-        TaskExecutionResponse response = service.resumeTask(INSTANCE_ID);
+        TaskOperationCommand command = new TaskOperationCommand();
+        command.setId(INSTANCE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
+        TaskExecutionResponse response = service.resumeTask(command);
 
         ArgumentCaptor<TaskInstanceBO> captor = ArgumentCaptor.forClass(TaskInstanceBO.class);
         verify(taskInstanceRepository).update(captor.capture());
@@ -188,7 +200,10 @@ class TaskExecutionApplicationServiceTest {
                 BigDecimal.valueOf(60), Collections.emptyList());
         when(pointsCalculationService.calculate(any(), any(), any())).thenReturn(calcResult);
 
-        TaskExecutionResponse response = service.completeTask(INSTANCE_ID);
+        TaskOperationCommand command = new TaskOperationCommand();
+        command.setId(INSTANCE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
+        TaskExecutionResponse response = service.completeTask(command);
 
         verify(pointsCalculationService).calculate(any(), eq(Collections.emptyMap()), any());
         ArgumentCaptor<TaskInstanceBO> captor = ArgumentCaptor.forClass(TaskInstanceBO.class);
@@ -206,7 +221,10 @@ class TaskExecutionApplicationServiceTest {
         TaskInstanceBO instance = createEndedInstance();
         when(taskInstanceRepository.findById(INSTANCE_ID)).thenReturn(Optional.of(instance));
 
-        assertThatThrownBy(() -> service.completeTask(INSTANCE_ID))
+        TaskOperationCommand command = new TaskOperationCommand();
+        command.setId(INSTANCE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
+        assertThatThrownBy(() -> service.completeTask(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("任务已结束");
         verify(pointsCalculationService, never()).calculate(any(), any(), any());
@@ -220,7 +238,10 @@ class TaskExecutionApplicationServiceTest {
         when(pointsCalculationService.calculate(any(), any(), any()))
                 .thenReturn(PointsCalculationResult.empty());
 
-        TaskExecutionResponse response = service.cancelTask(INSTANCE_ID);
+        TaskOperationCommand command = new TaskOperationCommand();
+        command.setId(INSTANCE_ID);
+        command.setClientTime(System.currentTimeMillis() / 1000);
+        TaskExecutionResponse response = service.cancelTask(command);
 
         verify(userInventoryRepository, never()).save(any());
         verify(userInventoryRepository, never()).update(any());

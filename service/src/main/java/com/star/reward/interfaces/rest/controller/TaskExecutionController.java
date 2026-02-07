@@ -6,6 +6,7 @@ import com.star.reward.application.service.TaskExecutionApplicationService;
 import com.star.reward.interfaces.rest.assembler.TaskExecutionRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.StartTaskRequest;
 import com.star.reward.interfaces.rest.dto.request.TaskExecutionQueryRequest;
+import com.star.reward.interfaces.rest.dto.request.TaskOperationRequest;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -78,35 +79,43 @@ public class TaskExecutionController {
      * 暂停任务
      */
     @PostMapping("/{id}/pause")
-    public Result<TaskExecutionResponse> pauseTask(@PathVariable Long id) {
-        TaskExecutionResponse response = taskExecutionApplicationService.pauseTask(id);
+    public Result<TaskExecutionResponse> pauseTask(@PathVariable Long id,
+            @Validated @RequestBody TaskOperationRequest request) {
+        TaskExecutionResponse response = taskExecutionApplicationService.pauseTask(
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
         return Result.success(response);
     }
-    
+
     /**
      * 恢复任务
      */
     @PostMapping("/{id}/resume")
-    public Result<TaskExecutionResponse> resumeTask(@PathVariable Long id) {
-        TaskExecutionResponse response = taskExecutionApplicationService.resumeTask(id);
+    public Result<TaskExecutionResponse> resumeTask(@PathVariable Long id,
+            @Validated @RequestBody TaskOperationRequest request) {
+        TaskExecutionResponse response = taskExecutionApplicationService.resumeTask(
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
         return Result.success(response);
     }
-    
+
     /**
      * 完成任务
      */
     @PostMapping("/{id}/complete")
-    public Result<TaskExecutionResponse> completeTask(@PathVariable Long id) {
-        TaskExecutionResponse response = taskExecutionApplicationService.completeTask(id);
+    public Result<TaskExecutionResponse> completeTask(@PathVariable Long id,
+            @Validated @RequestBody TaskOperationRequest request) {
+        TaskExecutionResponse response = taskExecutionApplicationService.completeTask(
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
         return Result.success(response);
     }
-    
+
     /**
      * 取消任务
      */
     @PostMapping("/{id}/cancel")
-    public Result<TaskExecutionResponse> cancelTask(@PathVariable Long id) {
-        TaskExecutionResponse response = taskExecutionApplicationService.cancelTask(id);
+    public Result<TaskExecutionResponse> cancelTask(@PathVariable Long id,
+            @Validated @RequestBody TaskOperationRequest request) {
+        TaskExecutionResponse response = taskExecutionApplicationService.cancelTask(
+                TaskExecutionRequestAssembler.requestToTaskOperationCommand(id, request));
         return Result.success(response);
     }
 }
