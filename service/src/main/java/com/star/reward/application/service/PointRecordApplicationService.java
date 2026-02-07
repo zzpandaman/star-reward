@@ -4,6 +4,7 @@ import com.star.common.exception.BusinessException;
 import com.star.common.page.PageResponse;
 import com.star.common.result.ResultCode;
 import com.star.reward.application.assembler.PointRecordAssembler;
+import com.star.reward.application.command.PointRecordQueryCommand;
 import com.star.reward.domain.pointrecord.model.entity.PointRecordBO;
 import com.star.reward.domain.pointrecord.model.valueobject.PointRecordType;
 import com.star.reward.domain.pointrecord.repository.PointRecordRepository;
@@ -27,13 +28,12 @@ public class PointRecordApplicationService {
     /**
      * 获取当前用户积分记录列表
      *
-     * @param type 可选，earn/spend 过滤类型
-     * @param page 页码，从1开始
-     * @param size 每页条数
+     * @param command 查询条件，type 可选
      */
-    public PageResponse<PointRecordResponse> listUserPointRecords(String type, Integer page, Integer size) {
+    public PageResponse<PointRecordResponse> listUserPointRecords(PointRecordQueryCommand command) {
         CurrentUserContext user = CurrentUserContext.get();
         List<PointRecordBO> records;
+        String type = command != null ? command.getType() : null;
         if (type != null && !type.isEmpty()) {
             PointRecordType recordType = "earn".equalsIgnoreCase(type) ? PointRecordType.EARN : PointRecordType.SPEND;
             records = pointRecordRepository.findByBelongToIdAndType(user.getUserId(), recordType);
@@ -43,15 +43,7 @@ public class PointRecordApplicationService {
         List<PointRecordResponse> responses = records.stream()
                 .map(PointRecordAssembler::entityToResponse)
                 .collect(Collectors.toList());
-
-        int total = responses.size();
-        int pageNum = (page != null && page > 0) ? page : 1;
-        int pageSize = (size != null && size > 0) ? size : total;
-        int fromIndex = Math.min((pageNum - 1) * pageSize, total);
-        int toIndex = Math.min(fromIndex + pageSize, total);
-        List<PointRecordResponse> paged = fromIndex < total ? responses.subList(fromIndex, toIndex) : responses;
-
-        return PageResponse.of(paged, total, pageNum, pageSize);
+        return PageResponse.of(responses, responses.size(), 1, responses.size());
     }
 
     /**
