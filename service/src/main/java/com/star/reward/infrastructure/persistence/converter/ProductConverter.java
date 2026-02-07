@@ -3,22 +3,23 @@ package com.star.reward.infrastructure.persistence.converter;
 import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardProductDO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * 商品转换器
+ * 商品转换器（Infrastructure：DO ↔ Entity）
  */
-@Component
-public class ProductConverter {
-    
+public final class ProductConverter {
+
+    private ProductConverter() {
+    }
+
     /**
-     * DO转领域实体
+     * DO → Entity
      */
-    public ProductBO toDomain(RewardProductDO doEntity) {
+    public static ProductBO doToEntity(RewardProductDO doEntity) {
         if (doEntity == null) {
             return null;
         }
@@ -32,14 +33,14 @@ public class ProductConverter {
         bo.setIsDeleted(doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1);
         bo.setCreateTime(convertToLocalDateTime(doEntity.getCreateTime()));
         bo.setUpdateTime(convertToLocalDateTime(doEntity.getUpdateTime()));
-        
+
         return bo;
     }
-    
+
     /**
-     * BO转DO（同名字段使用 BeanUtils 赋值）
+     * Entity → DO
      */
-    public RewardProductDO ProductBO2DO(ProductBO source) {
+    public static RewardProductDO entityToDo(ProductBO source) {
         if (source == null) {
             return null;
         }
@@ -58,21 +59,51 @@ public class ProductConverter {
         
         return target;
     }
-    
+
     /**
-     * Date转LocalDateTime
+     * Partial Entity → DO（仅复制非空字段，供 updateByPrimaryKeySelective 用）
      */
-    private LocalDateTime convertToLocalDateTime(Date date) {
+    public static RewardProductDO partialEntityToDo(ProductBO patch) {
+        if (patch == null || patch.getId() == null) {
+            return null;
+        }
+        RewardProductDO target = new RewardProductDO();
+        target.setId(patch.getId());
+        if (patch.getName() != null) {
+            target.setName(patch.getName());
+        }
+        if (patch.getDescription() != null) {
+            target.setDescription(patch.getDescription());
+        }
+        if (patch.getPrice() != null) {
+            target.setPrice(patch.getPrice());
+        }
+        if (patch.getMinQuantity() != null) {
+            target.setMinQuantity(patch.getMinQuantity());
+        }
+        if (patch.getMinUnit() != null) {
+            target.setMinUnit(patch.getMinUnit());
+        }
+        if (patch.getUpdateBy() != null) {
+            target.setUpdateBy(patch.getUpdateBy());
+        }
+        if (patch.getUpdateById() != null) {
+            target.setUpdateById(patch.getUpdateById());
+        }
+        if (patch.getUpdateTime() != null) {
+            target.setUpdateTime(convertToDate(patch.getUpdateTime()));
+        }
+        return target;
+    }
+    
+    private static LocalDateTime convertToLocalDateTime(Date date) {
         if (date == null) {
             return null;
         }
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
     
-    /**
-     * LocalDateTime转Date
-     */
-    private Date convertToDate(LocalDateTime localDateTime) {
+    private static Date convertToDate(LocalDateTime localDateTime) {
         if (localDateTime == null) {
             return null;
         }

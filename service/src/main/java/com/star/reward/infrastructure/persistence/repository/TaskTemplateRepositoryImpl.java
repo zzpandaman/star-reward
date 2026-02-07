@@ -19,9 +19,8 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
-    
+
     private final RewardTaskTemplateDOMapper mapper;
-    private final TaskTemplateConverter converter;
     
     @Override
     public Optional<TaskTemplateBO> findByTemplateNo(String templateNo) {
@@ -32,7 +31,7 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
         if (list.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(list.get(0)));
+        return Optional.of(TaskTemplateConverter.doToEntity(list.get(0)));
     }
     
     @Override
@@ -41,21 +40,21 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
         if (doEntity == null || (doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1)) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(doEntity));
+        return Optional.of(TaskTemplateConverter.doToEntity(doEntity));
     }
     
     @Override
     public TaskTemplateBO save(TaskTemplateBO taskTemplate) {
-        RewardTaskTemplateDO doEntity = converter.TaskTemplateBO2DO(taskTemplate);
+        RewardTaskTemplateDO doEntity = TaskTemplateConverter.entityToDo(taskTemplate);
         mapper.insertSelective(doEntity);
-        return converter.toDomain(doEntity);
+        return TaskTemplateConverter.doToEntity(doEntity);
     }
     
     @Override
     public TaskTemplateBO update(TaskTemplateBO taskTemplate) {
-        RewardTaskTemplateDO doEntity = converter.TaskTemplateBO2DO(taskTemplate);
+        RewardTaskTemplateDO doEntity = TaskTemplateConverter.partialEntityToDo(taskTemplate);
         mapper.updateByPrimaryKeySelective(doEntity);
-        return converter.toDomain(mapper.selectByPrimaryKey(taskTemplate.getId()));
+        return TaskTemplateConverter.doToEntity(mapper.selectByPrimaryKey(taskTemplate.getId()));
     }
     
     @Override
@@ -73,7 +72,7 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
         example.createCriteria().andIsDeletedEqualTo((byte) 0);
         List<RewardTaskTemplateDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(TaskTemplateConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -85,7 +84,7 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
                 .andIsDeletedEqualTo((byte) 0);
         List<RewardTaskTemplateDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(TaskTemplateConverter::doToEntity)
                 .collect(Collectors.toList());
     }
 }

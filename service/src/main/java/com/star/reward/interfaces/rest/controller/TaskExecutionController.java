@@ -3,6 +3,7 @@ package com.star.reward.interfaces.rest.controller;
 import com.star.common.page.PageResponse;
 import com.star.common.result.Result;
 import com.star.reward.application.service.TaskExecutionApplicationService;
+import com.star.reward.interfaces.rest.assembler.TaskExecutionRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.StartTaskRequest;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ public class TaskExecutionController {
      */
     @PostMapping("/start")
     public Result<TaskExecutionResponse> startTask(@Validated @RequestBody StartTaskRequest request) {
-        TaskExecutionResponse response = taskExecutionApplicationService.startTask(request);
+        TaskExecutionResponse response = taskExecutionApplicationService.startTask(TaskExecutionRequestAssembler.requestToStartCommand(request));
         return Result.success(response);
     }
     

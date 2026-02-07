@@ -1,5 +1,6 @@
 package com.star.reward.domain.userinventory.model.entity;
 
+import com.star.reward.domain.userinventory.model.constant.UserInventoryConstants;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -117,4 +118,31 @@ public class UserInventoryBO {
      * 扩展字段（JSON格式）
      */
     private String attributes;
+
+    /**
+     * 工厂方法：创建积分库存
+     *
+     * @param inventoryNo 库存编号
+     * @param userNo 所属人账号
+     * @param userId 所属人ID
+     * @param quantity 初始数量
+     * @param now 创建时间
+     */
+    public static UserInventoryBO createPointInventory(String inventoryNo, String userNo, Long userId,
+            BigDecimal quantity, LocalDateTime now) {
+        return UserInventoryBO.builder()
+                .inventoryNo(inventoryNo)
+                .inventoryType(InventoryType.POINT)
+                .name(UserInventoryConstants.POINT_INVENTORY_NAME)
+                .description(UserInventoryConstants.POINT_INVENTORY_DESCRIPTION)
+                .quantity(quantity)
+                .unit(UserInventoryConstants.POINT_UNIT)
+                .belongTo(userNo)
+                .belongToId(userId)
+                .isDeleted(false)
+                .createBy(userNo)
+                .createById(userId)
+                .createTime(now)
+                .build();
+    }
 }

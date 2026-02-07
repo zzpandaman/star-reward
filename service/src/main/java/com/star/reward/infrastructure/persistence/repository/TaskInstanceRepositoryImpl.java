@@ -20,9 +20,8 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
-    
+
     private final RewardTaskInstanceDOMapper mapper;
-    private final TaskInstanceConverter converter;
     
     @Override
     public Optional<TaskInstanceBO> findByInstanceNo(String instanceNo) {
@@ -33,7 +32,7 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
         if (list.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(list.get(0)));
+        return Optional.of(TaskInstanceConverter.doToEntity(list.get(0)));
     }
     
     @Override
@@ -42,21 +41,21 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
         if (doEntity == null || (doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1)) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(doEntity));
+        return Optional.of(TaskInstanceConverter.doToEntity(doEntity));
     }
     
     @Override
     public TaskInstanceBO save(TaskInstanceBO taskInstance) {
-        RewardTaskInstanceDO doEntity = converter.TaskInstanceBO2DO(taskInstance);
+        RewardTaskInstanceDO doEntity = TaskInstanceConverter.entityToDo(taskInstance);
         mapper.insertSelective(doEntity);
-        return converter.toDomain(doEntity);
+        return TaskInstanceConverter.doToEntity(doEntity);
     }
     
     @Override
     public TaskInstanceBO update(TaskInstanceBO taskInstance) {
-        RewardTaskInstanceDO doEntity = converter.TaskInstanceBO2DO(taskInstance);
+        RewardTaskInstanceDO doEntity = TaskInstanceConverter.entityToDo(taskInstance);
         mapper.updateByPrimaryKeySelective(doEntity);
-        return converter.toDomain(mapper.selectByPrimaryKey(taskInstance.getId()));
+        return TaskInstanceConverter.doToEntity(mapper.selectByPrimaryKey(taskInstance.getId()));
     }
     
     @Override
@@ -74,7 +73,7 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
         example.createCriteria().andTemplateNoEqualTo(templateNo).andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(TaskInstanceConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -84,7 +83,7 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
         example.createCriteria().andExecuteByIdEqualTo(executeById).andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(TaskInstanceConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -94,7 +93,7 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
         example.createCriteria().andInstanceStateEqualTo(instanceState.getCode()).andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(TaskInstanceConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -107,7 +106,7 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
                 .andIsDeletedEqualTo((byte) 0);
         List<RewardTaskInstanceDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(TaskInstanceConverter::doToEntity)
                 .collect(Collectors.toList());
     }
 }

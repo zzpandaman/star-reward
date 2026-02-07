@@ -6,22 +6,23 @@ import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
 import com.star.reward.domain.tasktemplate.model.valueobject.MinUnit;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskInstanceDO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * 任务实例转换器
+ * 任务实例转换器（Infrastructure：DO ↔ Entity）
  */
-@Component
-public class TaskInstanceConverter {
-    
+public final class TaskInstanceConverter {
+
+    private TaskInstanceConverter() {
+    }
+
     /**
-     * DO转领域实体
+     * DO → Entity
      */
-    public TaskInstanceBO toDomain(RewardTaskInstanceDO doEntity) {
+    public static TaskInstanceBO doToEntity(RewardTaskInstanceDO doEntity) {
         if (doEntity == null) {
             return null;
         }
@@ -47,9 +48,9 @@ public class TaskInstanceConverter {
     }
     
     /**
-     * BO转DO（同名字段使用 BeanUtils 赋值）
+     * Entity → DO
      */
-    public RewardTaskInstanceDO TaskInstanceBO2DO(TaskInstanceBO source) {
+    public static RewardTaskInstanceDO entityToDo(TaskInstanceBO source) {
         if (source == null) {
             return null;
         }
@@ -74,14 +75,14 @@ public class TaskInstanceConverter {
         return target;
     }
     
-    private LocalDateTime convertToLocalDateTime(Date date) {
+    private static LocalDateTime convertToLocalDateTime(Date date) {
         if (date == null) {
             return null;
         }
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
     
-    private Date convertToDate(LocalDateTime localDateTime) {
+    private static Date convertToDate(LocalDateTime localDateTime) {
         if (localDateTime == null) {
             return null;
         }

@@ -24,7 +24,7 @@ class ExecutionRecordParserTest {
     private static final LocalDateTime T13 = LocalDateTime.of(2025, 2, 5, 13, 0);
 
     private static ExecutionRecordVO record(ExecutionAction action, LocalDateTime time) {
-        return ExecutionRecordVO.builder().action(action).actionTime(time).build();
+        return ExecutionRecordVO.of(action, time);
     }
 
     @Test

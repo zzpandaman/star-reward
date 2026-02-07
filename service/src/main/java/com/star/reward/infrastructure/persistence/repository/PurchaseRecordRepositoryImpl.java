@@ -19,9 +19,8 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
-    
+
     private final RewardPurchaseRecordDOMapper mapper;
-    private final PurchaseRecordConverter converter;
     
     @Override
     public Optional<PurchaseRecordBO> findByPurchaseNo(String purchaseNo) {
@@ -32,7 +31,7 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
         if (list.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(list.get(0)));
+        return Optional.of(PurchaseRecordConverter.doToEntity(list.get(0)));
     }
     
     @Override
@@ -41,21 +40,21 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
         if (doEntity == null || (doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1)) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(doEntity));
+        return Optional.of(PurchaseRecordConverter.doToEntity(doEntity));
     }
     
     @Override
     public PurchaseRecordBO save(PurchaseRecordBO purchaseRecord) {
-        RewardPurchaseRecordDO doEntity = converter.PurchaseRecordBO2DO(purchaseRecord);
+        RewardPurchaseRecordDO doEntity = PurchaseRecordConverter.entityToDo(purchaseRecord);
         mapper.insertSelective(doEntity);
-        return converter.toDomain(doEntity);
+        return PurchaseRecordConverter.doToEntity(doEntity);
     }
     
     @Override
     public PurchaseRecordBO update(PurchaseRecordBO purchaseRecord) {
-        RewardPurchaseRecordDO doEntity = converter.PurchaseRecordBO2DO(purchaseRecord);
+        RewardPurchaseRecordDO doEntity = PurchaseRecordConverter.entityToDo(purchaseRecord);
         mapper.updateByPrimaryKeySelective(doEntity);
-        return converter.toDomain(mapper.selectByPrimaryKey(purchaseRecord.getId()));
+        return PurchaseRecordConverter.doToEntity(mapper.selectByPrimaryKey(purchaseRecord.getId()));
     }
     
     @Override
@@ -73,7 +72,7 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
         example.createCriteria().andProductNoEqualTo(productNo).andIsDeletedEqualTo((byte) 0);
         List<RewardPurchaseRecordDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(PurchaseRecordConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -83,7 +82,7 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
         example.createCriteria().andPurchaseByIdEqualTo(purchaseById).andIsDeletedEqualTo((byte) 0);
         List<RewardPurchaseRecordDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(PurchaseRecordConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -93,7 +92,7 @@ public class PurchaseRecordRepositoryImpl implements PurchaseRecordRepository {
         example.createCriteria().andPublishByIdEqualTo(publishById).andIsDeletedEqualTo((byte) 0);
         List<RewardPurchaseRecordDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(PurchaseRecordConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     

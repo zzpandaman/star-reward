@@ -2,9 +2,11 @@ package com.star.reward.domain.taskinstance.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.star.common.attribute.AttributeHolder;
+import com.star.reward.domain.taskinstance.model.valueobject.ExecutionAction;
 import com.star.reward.domain.taskinstance.model.valueobject.ExecutionRecordVO;
 import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
 import com.star.reward.domain.taskinstance.model.valueobject.PointsCalculationSnapshot;
+import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.model.valueobject.MinUnit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -181,5 +183,39 @@ public class TaskInstanceBO implements AttributeHolder {
 
     public void setPointsCalculationSnapshot(PointsCalculationSnapshot snapshot) {
         addAttributes(KEY_POINTS_CALCULATION_SNAPSHOT, snapshot);
+    }
+
+    /**
+     * 工厂方法：从模板创建任务实例（含初始 START 记录）
+     *
+     * @param template 任务模板
+     * @param instanceNo 实例编号
+     * @param executeBy 执行人账号
+     * @param executeById 执行人ID
+     * @param now 当前时间
+     */
+    public static TaskInstanceBO createFromTemplate(TaskTemplateBO template, String instanceNo,
+            String executeBy, Long executeById, LocalDateTime now) {
+        TaskInstanceBO instance = TaskInstanceBO.builder()
+                .instanceNo(instanceNo)
+                .templateNo(template.getTemplateNo())
+                .name(template.getName())
+                .description(template.getDescription())
+                .minUnitPoint(template.getMinUnitPoint() != null ? template.getMinUnitPoint().intValue() : 1)
+                .minUnit(template.getMinUnit())
+                .publishBy(template.getPublishBy())
+                .publishById(template.getPublishById())
+                .startTime(now)
+                .instanceState(InstanceState.RUNNING)
+                .executeBy(executeBy)
+                .executeById(executeById)
+                .isPreset(template.getIsPreset())
+                .isDeleted(false)
+                .createBy(executeBy)
+                .createById(executeById)
+                .createTime(now)
+                .build();
+        instance.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.START, now));
+        return instance;
     }
 }

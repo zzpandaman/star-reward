@@ -3,22 +3,23 @@ package com.star.reward.infrastructure.persistence.converter;
 import com.star.reward.domain.purchaserecord.model.entity.PurchaseRecordBO;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardPurchaseRecordDO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * 购买记录转换器
+ * 购买记录转换器（Infrastructure：DO ↔ Entity）
  */
-@Component
-public class PurchaseRecordConverter {
-    
+public final class PurchaseRecordConverter {
+
+    private PurchaseRecordConverter() {
+    }
+
     /**
-     * DO转领域实体
+     * DO → Entity
      */
-    public PurchaseRecordBO toDomain(RewardPurchaseRecordDO doEntity) {
+    public static PurchaseRecordBO doToEntity(RewardPurchaseRecordDO doEntity) {
         if (doEntity == null) {
             return null;
         }
@@ -37,9 +38,9 @@ public class PurchaseRecordConverter {
     }
     
     /**
-     * BO转DO（同名字段使用 BeanUtils 赋值）
+     * Entity → DO
      */
-    public RewardPurchaseRecordDO PurchaseRecordBO2DO(PurchaseRecordBO source) {
+    public static RewardPurchaseRecordDO entityToDo(PurchaseRecordBO source) {
         if (source == null) {
             return null;
         }
@@ -57,14 +58,14 @@ public class PurchaseRecordConverter {
         return target;
     }
     
-    private LocalDateTime convertToLocalDateTime(Date date) {
+    private static LocalDateTime convertToLocalDateTime(Date date) {
         if (date == null) {
             return null;
         }
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
     
-    private Date convertToDate(LocalDateTime localDateTime) {
+    private static Date convertToDate(LocalDateTime localDateTime) {
         if (localDateTime == null) {
             return null;
         }

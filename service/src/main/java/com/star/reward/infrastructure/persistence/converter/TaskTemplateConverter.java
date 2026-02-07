@@ -4,22 +4,23 @@ import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.model.valueobject.MinUnit;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskTemplateDO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * 任务模板转换器
+ * 任务模板转换器（Infrastructure：DO ↔ Entity）
  */
-@Component
-public class TaskTemplateConverter {
-    
+public final class TaskTemplateConverter {
+
+    private TaskTemplateConverter() {
+    }
+
     /**
-     * DO转领域实体
+     * DO → Entity
      */
-    public TaskTemplateBO toDomain(RewardTaskTemplateDO doEntity) {
+    public static TaskTemplateBO doToEntity(RewardTaskTemplateDO doEntity) {
         if (doEntity == null) {
             return null;
         }
@@ -39,9 +40,9 @@ public class TaskTemplateConverter {
     }
     
     /**
-     * BO转DO（同名字段使用 BeanUtils 赋值）
+     * Entity → DO
      */
-    public RewardTaskTemplateDO TaskTemplateBO2DO(TaskTemplateBO source) {
+    public static RewardTaskTemplateDO entityToDo(TaskTemplateBO source) {
         if (source == null) {
             return null;
         }
@@ -59,15 +60,42 @@ public class TaskTemplateConverter {
         
         return target;
     }
+
+    /**
+     * Partial Entity → DO（仅复制非空字段，供 updateByPrimaryKeySelective 用）
+     */
+    public static RewardTaskTemplateDO partialEntityToDo(TaskTemplateBO patch) {
+        if (patch == null || patch.getId() == null) {
+            return null;
+        }
+        RewardTaskTemplateDO target = new RewardTaskTemplateDO();
+        target.setId(patch.getId());
+        if (patch.getName() != null) {
+            target.setName(patch.getName());
+        }
+        if (patch.getDescription() != null) {
+            target.setDescription(patch.getDescription());
+        }
+        if (patch.getUpdateBy() != null) {
+            target.setUpdateBy(patch.getUpdateBy());
+        }
+        if (patch.getUpdateById() != null) {
+            target.setUpdateById(patch.getUpdateById());
+        }
+        if (patch.getUpdateTime() != null) {
+            target.setUpdateTime(convertToDate(patch.getUpdateTime()));
+        }
+        return target;
+    }
     
-    private LocalDateTime convertToLocalDateTime(Date date) {
+    private static LocalDateTime convertToLocalDateTime(Date date) {
         if (date == null) {
             return null;
         }
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
     
-    private Date convertToDate(LocalDateTime localDateTime) {
+    private static Date convertToDate(LocalDateTime localDateTime) {
         if (localDateTime == null) {
             return null;
         }

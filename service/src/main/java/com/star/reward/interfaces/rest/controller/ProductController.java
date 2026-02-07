@@ -3,6 +3,7 @@ package com.star.reward.interfaces.rest.controller;
 import com.star.common.page.PageResponse;
 import com.star.common.result.Result;
 import com.star.reward.application.service.ProductApplicationService;
+import com.star.reward.interfaces.rest.assembler.ProductRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.CreateProductRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateProductRequest;
 import com.star.reward.interfaces.rest.dto.response.ProductResponse;
@@ -43,7 +44,7 @@ public class ProductController {
      */
     @PostMapping
     public Result<ProductResponse> createProduct(@Validated @RequestBody CreateProductRequest request) {
-        ProductResponse response = productApplicationService.createProduct(request);
+        ProductResponse response = productApplicationService.createProduct(ProductRequestAssembler.requestToCreateCommand(request));
         return Result.success(response);
     }
     
@@ -54,7 +55,7 @@ public class ProductController {
     public Result<ProductResponse> updateProduct(
             @PathVariable Long id,
             @RequestBody UpdateProductRequest request) {
-        ProductResponse response = productApplicationService.updateProduct(id, request);
+        ProductResponse response = productApplicationService.updateProduct(id, ProductRequestAssembler.requestToUpdateCommand(request));
         return Result.success(response);
     }
     

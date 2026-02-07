@@ -1,0 +1,81 @@
+---
+description: 域常量与充血模型规范（魔法值收束、充血工厂方法）
+globs: ["**/domain/**/*.java", "**/application/**/*.java"]
+alwaysApply: false
+---
+
+# 域常量与充血模型
+
+## 1. 禁止魔法值
+
+业务字符串、数字须放入聚合根下的 `constant/` 常量类：
+
+```
+domain/{aggregate}/model/constant/{Aggregate}Constants.java
+domain/shared/constant/RewardConstants.java  # 通用常量
+```
+
+**示例**
+
+```java
+// ❌ BAD
+return "EXE" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+instance.setRemark("已取消");
+status = "running";
+
+// ✅ GOOD
+return RewardNoGenerator.generate(TaskInstanceConstants.INSTANCE_NO_PREFIX);
+instance.setRemark(TaskInstanceConstants.REMARK_CANCELLED);
+status = TaskInstanceConstants.STATUS_RUNNING;
+```
+
+## 2. 充血工厂方法
+
+领域实体/值对象优先使用充血工厂方法（`createXxx`、`of`、`empty`、`initForCreate`），减少 Builder 链式调用。
+
+| 类型 | 约定 | 示例 |
+|------|------|------|
+| 实体创建（模板/库存） | `createFromTemplate`、`createPointInventory` | `TaskInstanceBO.createFromTemplate(...)` |
+| 实体创建（Request 驱动） | `initForCreate` | `ProductBO.initForCreate(productNo, userNo, userId, now)` |
+| 值对象 | `of`、`empty` | `ExecutionRecordVO.of(action, time)`、`PointsCalculationResult.empty()` |
+
+**示例**
+
+```java
+// ❌ BAD：在 Application 层用 Builder 拼装领域对象
+TaskInstanceBO instance = TaskInstanceBO.builder()
+    .instanceNo(...).templateNo(...).name(...)...build();
+ProductBO product = ProductBO.builder().productNo(...).name(...)...build();
+
+// ✅ GOOD：领域工厂方法
+TaskInstanceBO instance = TaskInstanceBO.createFromTemplate(template, instanceNo, userNo, userId, now);
+// Request 驱动创建：Command + Assembler + initForCreate
+CreateProductCommand cmd = ProductRequestAssembler.requestToCreateCommand(request);  // Interfaces（静态方法）
+ProductBO product = ProductAssembler.createCommandToEntity(cmd);  // Application（静态方法）
+product.initForCreate(productNo, user.getUserNo(), user.getUserId(), LocalDateTime.now());
+```
+
+## 3. 创建流程（Request 驱动）
+
+创建流程统一为：**Request → Command（Interfaces）→ Assembler.toEntity（Application）→ initForCreate → Repository.save**
+
+- **XxxRequestAssembler**（`interfaces/rest/assembler/`）：Request → Command，边界转换
+- **XxxAssembler**（`application/assembler/`）：Command → Entity（仅业务字段）、Entity → Response
+- **initForCreate**（BO 充血方法）：负责编号、默认值、审计字段（productNo、isPreset、isDeleted、publishBy、createBy、createTime 等）
+- **initForCreate 入参**：基本类型（编号、userNo、userId、now），不依赖 CurrentUserContext
+
+## 4. 更新流程（Update 驱动）
+
+更新流程统一为：**UpdateCommand → Assembler.updateCommandToPartialEntity → partialEntityToDo → updateByPrimaryKeySelective**
+
+- **XxxAssembler.updateCommandToPartialEntity**：UpdateCommand → Partial BO（仅 id、非空业务字段、审计字段）
+- **XxxConverter.partialEntityToDo**：Partial BO → DO（仅非空字段，配合 updateByPrimaryKeySelective）
+- **禁止**在 ApplicationService 中手写 `if (command.getX() != null) entity.setX()`，一律由 Assembler 完成
+
+## 5. 编号生成
+
+统一使用 `RewardNoGenerator.generate(prefix)`，前缀从对应常量类获取。
+
+## 6. 接口层 DTO
+
+REST 响应 DTO、Feign DTO 可保留 `@Builder`，不受本规范约束。

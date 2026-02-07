@@ -2,6 +2,8 @@ package com.star.reward.shared.context;
 
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 当前用户上下文
  */
@@ -26,12 +28,12 @@ public class CurrentUserContext {
     /**
      * 角色列表
      */
-    private java.util.List<String> roles;
+    private List<String> roles;
     
     /**
      * 权限列表
      */
-    private java.util.List<String> permissions;
+    private List<String> permissions;
     
     private static final ThreadLocal<CurrentUserContext> CONTEXT = new ThreadLocal<>();
     

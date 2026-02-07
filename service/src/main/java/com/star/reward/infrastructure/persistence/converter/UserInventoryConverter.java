@@ -4,22 +4,23 @@ import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardUserInventoryDO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * 用户库存转换器
+ * 用户库存转换器（Infrastructure：DO ↔ Entity）
  */
-@Component
-public class UserInventoryConverter {
-    
+public final class UserInventoryConverter {
+
+    private UserInventoryConverter() {
+    }
+
     /**
-     * DO转领域实体
+     * DO → Entity
      */
-    public UserInventoryBO toDomain(RewardUserInventoryDO doEntity) {
+    public static UserInventoryBO doToEntity(RewardUserInventoryDO doEntity) {
         if (doEntity == null) {
             return null;
         }
@@ -38,9 +39,9 @@ public class UserInventoryConverter {
     }
     
     /**
-     * BO转DO（同名字段使用 BeanUtils 赋值）
+     * Entity → DO
      */
-    public RewardUserInventoryDO UserInventoryBO2DO(UserInventoryBO source) {
+    public static RewardUserInventoryDO entityToDo(UserInventoryBO source) {
         if (source == null) {
             return null;
         }
@@ -58,14 +59,14 @@ public class UserInventoryConverter {
         return target;
     }
     
-    private LocalDateTime convertToLocalDateTime(Date date) {
+    private static LocalDateTime convertToLocalDateTime(Date date) {
         if (date == null) {
             return null;
         }
         return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     }
     
-    private Date convertToDate(LocalDateTime localDateTime) {
+    private static Date convertToDate(LocalDateTime localDateTime) {
         if (localDateTime == null) {
             return null;
         }

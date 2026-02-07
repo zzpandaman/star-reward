@@ -3,21 +3,24 @@ package com.star.reward.application.service;
 import com.star.common.exception.BusinessException;
 import com.star.common.page.PageResponse;
 import com.star.common.result.ResultCode;
+import com.star.reward.application.assembler.TaskTemplateAssembler;
+import com.star.reward.application.command.CreateTaskTemplateCommand;
 import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
 import com.star.reward.domain.taskinstance.repository.TaskInstanceRepository;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
-import com.star.reward.interfaces.rest.dto.request.CreateTaskTemplateRequest;
-import com.star.reward.interfaces.rest.dto.request.UpdateTaskTemplateRequest;
+import com.star.reward.application.command.UpdateTaskTemplateCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskTemplateResponse;
 import com.star.reward.shared.context.CurrentUserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.star.reward.domain.shared.util.RewardNoGenerator;
+import com.star.reward.domain.tasktemplate.model.constant.TaskTemplateConstants;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -26,7 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TaskTemplateApplicationService {
-    
+
     private final TaskTemplateRepository taskTemplateRepository;
     private final TaskInstanceRepository taskInstanceRepository;
     
@@ -36,7 +39,7 @@ public class TaskTemplateApplicationService {
     public PageResponse<TaskTemplateResponse> getAllTaskTemplates() {
         List<TaskTemplateBO> templates = taskTemplateRepository.findAll();
         List<TaskTemplateResponse> responses = templates.stream()
-                .map(this::toResponse)
+                .map(TaskTemplateAssembler::entityToResponse)
                 .collect(Collectors.toList());
         return PageResponse.of(responses, responses.size(), 1, responses.size());
     }
@@ -47,65 +50,45 @@ public class TaskTemplateApplicationService {
     public TaskTemplateResponse getTaskTemplateById(Long id) {
         TaskTemplateBO template = taskTemplateRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务模板不存在"));
-        return toResponse(template);
+        return TaskTemplateAssembler.entityToResponse(template);
     }
-    
+
     /**
      * 创建任务模板
      */
     @Transactional
-    public TaskTemplateResponse createTaskTemplate(CreateTaskTemplateRequest request) {
+    public TaskTemplateResponse createTaskTemplate(CreateTaskTemplateCommand command) {
         CurrentUserContext user = CurrentUserContext.get();
-        
-        TaskTemplateBO template = TaskTemplateBO.builder()
-                .templateNo(generateTemplateNo())
-                .name(request.getName())
-                .description(request.getDescription())
-                .isPreset(false)
-                .isDeleted(false)
-                .publishBy(user.getUserNo())
-                .publishById(user.getUserId())
-                .createBy(user.getUserNo())
-                .createById(user.getUserId())
-                .createTime(LocalDateTime.now())
-                .updateBy(user.getUserNo())
-                .updateById(user.getUserId())
-                .updateTime(LocalDateTime.now())
-                .build();
-        
+
+        TaskTemplateBO template = TaskTemplateAssembler.createCommandToEntity(command);
+        template.initForCreate(
+                RewardNoGenerator.generate(TaskTemplateConstants.TEMPLATE_NO_PREFIX),
+                user.getUserNo(), user.getUserId(), LocalDateTime.now());
+
         TaskTemplateBO saved = taskTemplateRepository.save(template);
-        return toResponse(saved);
+        return TaskTemplateAssembler.entityToResponse(saved);
     }
     
     /**
      * 更新任务模板
      */
     @Transactional
-    public TaskTemplateResponse updateTaskTemplate(Long id, UpdateTaskTemplateRequest request) {
+    public TaskTemplateResponse updateTaskTemplate(Long id, UpdateTaskTemplateCommand command) {
         TaskTemplateBO template = taskTemplateRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务模板不存在"));
         
         if (Boolean.TRUE.equals(template.getIsPreset())) {
-            throw new BusinessException(ResultCode.CANNOT_UPDATE_PRESET.getCode(), 
+            throw new BusinessException(ResultCode.CANNOT_UPDATE_PRESET.getCode(),
                     ResultCode.CANNOT_UPDATE_PRESET.getMessage());
         }
-        
+
         CurrentUserContext user = CurrentUserContext.get();
-        
-        if (request.getName() != null) {
-            template.setName(request.getName());
-        }
-        if (request.getDescription() != null) {
-            template.setDescription(request.getDescription());
-        }
-        template.setUpdateBy(user.getUserNo());
-        template.setUpdateById(user.getUserId());
-        template.setUpdateTime(LocalDateTime.now());
-        
-        TaskTemplateBO updated = taskTemplateRepository.update(template);
-        return toResponse(updated);
+        TaskTemplateBO patch = TaskTemplateAssembler.updateCommandToPartialEntity(id, command,
+                user.getUserNo(), user.getUserId(), LocalDateTime.now());
+        TaskTemplateBO updated = taskTemplateRepository.update(patch);
+        return TaskTemplateAssembler.entityToResponse(updated);
     }
-    
+
     /**
      * 删除任务模板
      */
@@ -126,27 +109,5 @@ public class TaskTemplateApplicationService {
         }
         
         taskTemplateRepository.delete(id);
-    }
-    
-    /**
-     * 生成模板编号
-     */
-    private String generateTemplateNo() {
-        return "TMP" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
-    }
-    
-    /**
-     * 转换为响应
-     */
-    private TaskTemplateResponse toResponse(TaskTemplateBO bo) {
-        return TaskTemplateResponse.builder()
-                .id(bo.getId())
-                .templateNo(bo.getTemplateNo())
-                .name(bo.getName())
-                .description(bo.getDescription())
-                .isPreset(bo.getIsPreset())
-                .createTime(bo.getCreateTime())
-                .updateTime(bo.getUpdateTime())
-                .build();
     }
 }

@@ -3,6 +3,7 @@ package com.star.reward.interfaces.rest.controller;
 import com.star.common.page.PageResponse;
 import com.star.common.result.Result;
 import com.star.reward.application.service.TaskTemplateApplicationService;
+import com.star.reward.interfaces.rest.assembler.TaskTemplateRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.CreateTaskTemplateRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateTaskTemplateRequest;
 import com.star.reward.interfaces.rest.dto.response.TaskTemplateResponse;
@@ -43,7 +44,8 @@ public class TaskTemplateController {
      */
     @PostMapping
     public Result<TaskTemplateResponse> createTaskTemplate(@Validated @RequestBody CreateTaskTemplateRequest request) {
-        TaskTemplateResponse response = taskTemplateApplicationService.createTaskTemplate(request);
+        TaskTemplateResponse response = taskTemplateApplicationService.createTaskTemplate(
+                TaskTemplateRequestAssembler.requestToCreateCommand(request));
         return Result.success(response);
     }
     
@@ -54,7 +56,7 @@ public class TaskTemplateController {
     public Result<TaskTemplateResponse> updateTaskTemplate(
             @PathVariable Long id,
             @RequestBody UpdateTaskTemplateRequest request) {
-        TaskTemplateResponse response = taskTemplateApplicationService.updateTaskTemplate(id, request);
+        TaskTemplateResponse response = taskTemplateApplicationService.updateTaskTemplate(id, TaskTemplateRequestAssembler.requestToUpdateCommand(request));
         return Result.success(response);
     }
     

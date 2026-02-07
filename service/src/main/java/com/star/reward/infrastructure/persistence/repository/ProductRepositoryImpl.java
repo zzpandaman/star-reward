@@ -19,9 +19,8 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepository {
-    
+
     private final RewardProductDOMapper mapper;
-    private final ProductConverter converter;
     
     @Override
     public Optional<ProductBO> findByProductNo(String productNo) {
@@ -32,7 +31,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         if (list.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(list.get(0)));
+        return Optional.of(ProductConverter.doToEntity(list.get(0)));
     }
     
     @Override
@@ -41,21 +40,21 @@ public class ProductRepositoryImpl implements ProductRepository {
         if (doEntity == null || (doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1)) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(doEntity));
+        return Optional.of(ProductConverter.doToEntity(doEntity));
     }
     
     @Override
     public ProductBO save(ProductBO product) {
-        RewardProductDO doEntity = converter.ProductBO2DO(product);
+        RewardProductDO doEntity = ProductConverter.entityToDo(product);
         mapper.insertSelective(doEntity);
-        return converter.toDomain(doEntity);
+        return ProductConverter.doToEntity(doEntity);
     }
     
     @Override
     public ProductBO update(ProductBO product) {
-        RewardProductDO doEntity = converter.ProductBO2DO(product);
+        RewardProductDO doEntity = ProductConverter.partialEntityToDo(product);
         mapper.updateByPrimaryKeySelective(doEntity);
-        return converter.toDomain(mapper.selectByPrimaryKey(product.getId()));
+        return ProductConverter.doToEntity(mapper.selectByPrimaryKey(product.getId()));
     }
     
     @Override
@@ -73,7 +72,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         example.createCriteria().andIsDeletedEqualTo((byte) 0);
         List<RewardProductDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(ProductConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -85,7 +84,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 .andIsDeletedEqualTo((byte) 0);
         List<RewardProductDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(ProductConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -95,7 +94,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         example.createCriteria().andPublishByIdEqualTo(publishById).andIsDeletedEqualTo((byte) 0);
         List<RewardProductDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(ProductConverter::doToEntity)
                 .collect(Collectors.toList());
     }
 }

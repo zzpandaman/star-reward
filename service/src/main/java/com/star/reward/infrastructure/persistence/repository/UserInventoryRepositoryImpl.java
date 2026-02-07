@@ -20,9 +20,8 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class UserInventoryRepositoryImpl implements UserInventoryRepository {
-    
+
     private final RewardUserInventoryDOMapper mapper;
-    private final UserInventoryConverter converter;
     
     @Override
     public Optional<UserInventoryBO> findByInventoryNo(String inventoryNo) {
@@ -33,7 +32,7 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
         if (list.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(list.get(0)));
+        return Optional.of(UserInventoryConverter.doToEntity(list.get(0)));
     }
     
     @Override
@@ -42,21 +41,21 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
         if (doEntity == null || (doEntity.getIsDeleted() != null && doEntity.getIsDeleted() == 1)) {
             return Optional.empty();
         }
-        return Optional.of(converter.toDomain(doEntity));
+        return Optional.of(UserInventoryConverter.doToEntity(doEntity));
     }
     
     @Override
     public UserInventoryBO save(UserInventoryBO userInventory) {
-        RewardUserInventoryDO doEntity = converter.UserInventoryBO2DO(userInventory);
+        RewardUserInventoryDO doEntity = UserInventoryConverter.entityToDo(userInventory);
         mapper.insertSelective(doEntity);
-        return converter.toDomain(doEntity);
+        return UserInventoryConverter.doToEntity(doEntity);
     }
     
     @Override
     public UserInventoryBO update(UserInventoryBO userInventory) {
-        RewardUserInventoryDO doEntity = converter.UserInventoryBO2DO(userInventory);
+        RewardUserInventoryDO doEntity = UserInventoryConverter.entityToDo(userInventory);
         mapper.updateByPrimaryKeySelective(doEntity);
-        return converter.toDomain(mapper.selectByPrimaryKey(userInventory.getId()));
+        return UserInventoryConverter.doToEntity(mapper.selectByPrimaryKey(userInventory.getId()));
     }
     
     @Override
@@ -74,7 +73,7 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
         example.createCriteria().andBelongToIdEqualTo(belongToId).andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(UserInventoryConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -84,7 +83,7 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
         example.createCriteria().andInventoryTypeEqualTo(inventoryType.getCode()).andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(UserInventoryConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -97,7 +96,7 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
                 .andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(UserInventoryConverter::doToEntity)
                 .collect(Collectors.toList());
     }
     
@@ -107,7 +106,7 @@ public class UserInventoryRepositoryImpl implements UserInventoryRepository {
         example.createCriteria().andPublishByIdEqualTo(publishById).andIsDeletedEqualTo((byte) 0);
         List<RewardUserInventoryDO> list = mapper.selectByExample(example);
         return list.stream()
-                .map(converter::toDomain)
+                .map(UserInventoryConverter::doToEntity)
                 .collect(Collectors.toList());
     }
 }

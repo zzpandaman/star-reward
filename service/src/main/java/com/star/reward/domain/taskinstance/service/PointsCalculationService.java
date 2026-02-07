@@ -6,6 +6,7 @@ import com.star.reward.domain.taskinstance.model.valueobject.ExecutionInterval;
 import com.star.reward.domain.taskinstance.model.valueobject.ExecutionIntervalType;
 import com.star.reward.domain.taskinstance.model.valueobject.PointsConversionSegment;
 import com.star.reward.domain.taskinstance.model.valueobject.PointsDetailItem;
+import com.star.reward.domain.shared.constant.RewardConstants;
 import com.star.reward.domain.taskinstance.model.valueobject.PointsCalculationResult;
 import com.star.reward.domain.taskinstance.model.valueobject.TimeRange;
 
@@ -36,12 +37,9 @@ public class PointsCalculationService {
             List<ExecutionInterval> executionIntervals,
             Map<Integer, List<PointsConversionSegment>> multiplierToSegments,
             Integer pointsPerMinute) {
-        int basePoints = pointsPerMinute != null ? pointsPerMinute : 1;
+        int basePoints = pointsPerMinute != null ? pointsPerMinute : RewardConstants.DEFAULT_POINTS_PER_MINUTE;
         if (executionIntervals == null || executionIntervals.isEmpty()) {
-            return PointsCalculationResult.builder()
-                    .totalPoints(BigDecimal.ZERO)
-                    .details(Collections.emptyList())
-                    .build();
+            return PointsCalculationResult.empty();
         }
 
         List<PointsDetailItem> details = new ArrayList<>();
@@ -68,10 +66,7 @@ public class PointsCalculationService {
             }
         }
 
-        return PointsCalculationResult.builder()
-                .totalPoints(total)
-                .details(details)
-                .build();
+        return PointsCalculationResult.of(total, details);
     }
 
     private List<SegmentWithMultiplier> flattenMultiplierSegments(Map<Integer, List<PointsConversionSegment>> multiplierToSegments) {

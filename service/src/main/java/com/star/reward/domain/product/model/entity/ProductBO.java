@@ -111,4 +111,26 @@ public class ProductBO {
      * 扩展字段（JSON格式）
      */
     private String attributes;
+
+    /**
+     * 充血方法：初始化创建时的编号、默认值、审计字段
+     *
+     * @param productNo 商品编号
+     * @param userNo 用户账号
+     * @param userId 用户ID
+     * @param now 创建时间
+     */
+    public void initForCreate(String productNo, String userNo, Long userId, LocalDateTime now) {
+        this.productNo = productNo;
+        this.isPreset = false;
+        this.isDeleted = false;
+        this.publishBy = userNo;
+        this.publishById = userId;
+        this.createBy = userNo;
+        this.createById = userId;
+        this.createTime = now;
+        this.updateBy = userNo;
+        this.updateById = userId;
+        this.updateTime = now;
+    }
 }

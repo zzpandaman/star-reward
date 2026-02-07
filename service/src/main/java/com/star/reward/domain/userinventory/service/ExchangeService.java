@@ -13,10 +13,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.star.reward.domain.shared.util.RewardNoGenerator;
+import com.star.reward.domain.userinventory.model.constant.UserInventoryConstants;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 兑换领域服务
@@ -92,7 +94,7 @@ public class ExchangeService {
         } else {
             // 创建新库存
             UserInventoryBO inventory = UserInventoryBO.builder()
-                    .inventoryNo(generateInventoryNo())
+                    .inventoryNo(RewardNoGenerator.generate(UserInventoryConstants.INVENTORY_NO_PREFIX))
                     .inventoryType(InventoryType.PRODUCT)
                     .name(product.getName())
                     .description(product.getDescription())
@@ -116,7 +118,7 @@ public class ExchangeService {
      */
     private void createPurchaseRecord(Long userId, String userNo, ProductBO product, BigDecimal quantity) {
         PurchaseRecordBO record = PurchaseRecordBO.builder()
-                .purchaseNo(generateRecordNo())
+                .purchaseNo(RewardNoGenerator.generate(UserInventoryConstants.RECORD_NO_PREFIX))
                 .productNo(product.getProductNo())
                 .name(product.getName())
                 .description(product.getDescription())
@@ -134,20 +136,6 @@ public class ExchangeService {
                 .createTime(LocalDateTime.now())
                 .build();
         purchaseRecordRepository.save(record);
-    }
-    
-    /**
-     * 生成库存编号
-     */
-    private String generateInventoryNo() {
-        return "INV" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
-    }
-    
-    /**
-     * 生成记录编号
-     */
-    private String generateRecordNo() {
-        return "REC" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
     }
     
     /**

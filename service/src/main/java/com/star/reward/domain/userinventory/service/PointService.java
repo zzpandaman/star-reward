@@ -6,10 +6,12 @@ import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.star.reward.domain.shared.util.RewardNoGenerator;
+import com.star.reward.domain.userinventory.model.constant.UserInventoryConstants;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 积分领域服务
@@ -41,21 +43,9 @@ public class PointService {
                 .findByBelongToIdAndType(userId, InventoryType.POINT);
         
         if (pointInventories.isEmpty()) {
-            // 创建积分库存
-            UserInventoryBO inventory = UserInventoryBO.builder()
-                    .inventoryNo(generateInventoryNo())
-                    .inventoryType(InventoryType.POINT)
-                    .name("积分")
-                    .description("用户积分")
-                    .quantity(amount)
-                    .unit("点")
-                    .belongTo(userNo)
-                    .belongToId(userId)
-                    .isDeleted(false)
-                    .createBy(userNo)
-                    .createById(userId)
-                    .createTime(LocalDateTime.now())
-                    .build();
+            UserInventoryBO inventory = UserInventoryBO.createPointInventory(
+                    RewardNoGenerator.generate(UserInventoryConstants.INVENTORY_NO_PREFIX),
+                    userNo, userId, amount, LocalDateTime.now());
             userInventoryRepository.save(inventory);
         } else {
             // 更新积分
@@ -101,10 +91,4 @@ public class PointService {
         return currentPoints.compareTo(amount) >= 0;
     }
     
-    /**
-     * 生成库存编号
-     */
-    private String generateInventoryNo() {
-        return "INV" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
-    }
 }

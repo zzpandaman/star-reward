@@ -21,4 +21,14 @@ public class ExecutionRecordVO {
 
     /** 动作时间 */
     private LocalDateTime actionTime;
+
+    /**
+     * 工厂方法：创建执行记录
+     */
+    public static ExecutionRecordVO of(ExecutionAction action, LocalDateTime actionTime) {
+        return ExecutionRecordVO.builder()
+                .action(action)
+                .actionTime(actionTime)
+                .build();
+    }
 }

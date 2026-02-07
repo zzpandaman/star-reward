@@ -10,7 +10,7 @@ import com.star.reward.domain.purchaserecord.repository.PurchaseRecordRepository
 import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
-import com.star.reward.interfaces.rest.dto.request.ExchangeProductRequest;
+import com.star.reward.application.command.ExchangeProductCommand;
 import com.star.reward.interfaces.rest.dto.response.ExchangeResponse;
 import com.star.reward.interfaces.rest.dto.response.InventoryResponse;
 import com.star.reward.interfaces.rest.dto.response.ProductResponse;
@@ -20,10 +20,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.star.reward.domain.shared.util.RewardNoGenerator;
+import com.star.reward.domain.userinventory.model.constant.UserInventoryConstants;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -76,15 +78,15 @@ public class UserApplicationService {
      * 兑换商品
      */
     @Transactional
-    public ExchangeResponse exchangeProduct(ExchangeProductRequest request) {
+    public ExchangeResponse exchangeProduct(ExchangeProductCommand command) {
         CurrentUserContext user = CurrentUserContext.get();
         
         // 获取商品信息
-        ProductBO product = productRepository.findById(request.getProductId())
+        ProductBO product = productRepository.findById(command.getProductId())
                 .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "商品不存在"));
         
         // 计算兑换数量（默认为最小购买数量）
-        BigDecimal quantity = request.getQuantity();
+        BigDecimal quantity = command.getQuantity();
         if (quantity == null) {
             quantity = product.getMinQuantity();
         }
@@ -149,7 +151,7 @@ public class UserApplicationService {
         } else {
             // 创建新库存
             UserInventoryBO inventory = UserInventoryBO.builder()
-                    .inventoryNo(generateInventoryNo())
+                    .inventoryNo(RewardNoGenerator.generate(UserInventoryConstants.INVENTORY_NO_PREFIX))
                     .inventoryType(InventoryType.PRODUCT)
                     .name(product.getName())
                     .description(product.getDescription())
@@ -174,7 +176,7 @@ public class UserApplicationService {
     private void createPurchaseRecord(CurrentUserContext user, ProductBO product, 
                                        BigDecimal quantity, BigDecimal pointsSpent) {
         PurchaseRecordBO record = PurchaseRecordBO.builder()
-                .purchaseNo(generateRecordNo())
+                .purchaseNo(RewardNoGenerator.generate(UserInventoryConstants.RECORD_NO_PREFIX))
                 .productNo(product.getProductNo())
                 .name(product.getName())
                 .description(product.getDescription())
@@ -192,20 +194,6 @@ public class UserApplicationService {
                 .createTime(LocalDateTime.now())
                 .build();
         purchaseRecordRepository.save(record);
-    }
-    
-    /**
-     * 生成库存编号
-     */
-    private String generateInventoryNo() {
-        return "INV" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
-    }
-    
-    /**
-     * 生成记录编号
-     */
-    private String generateRecordNo() {
-        return "REC" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
     }
     
     /**

@@ -22,4 +22,5 @@
 | 规则 | 说明 |
 |------|------|
 | attribute-extension | AttributeHolder 扩展字段 |
+| domain-constants-rich-model | 域常量收束、充血工厂方法 |
 | flyway-migration | Flyway 迁移规范 |

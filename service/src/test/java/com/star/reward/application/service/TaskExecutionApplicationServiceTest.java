@@ -3,6 +3,7 @@ package com.star.reward.application.service;
 import com.star.common.exception.BusinessException;
 import com.star.common.result.ResultCode;
 import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
+import com.star.reward.domain.taskinstance.model.constant.TaskInstanceConstants;
 import com.star.reward.domain.taskinstance.model.valueobject.ExecutionAction;
 import com.star.reward.domain.taskinstance.model.valueobject.ExecutionRecordVO;
 import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
@@ -12,7 +13,7 @@ import com.star.reward.domain.taskinstance.service.PointsCalculationService;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
-import com.star.reward.interfaces.rest.dto.request.StartTaskRequest;
+import com.star.reward.application.command.StartTaskCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
 import com.star.reward.shared.context.CurrentUserContext;
 import org.junit.jupiter.api.AfterEach;
@@ -97,10 +98,10 @@ class TaskExecutionApplicationServiceTest {
                 .build();
         when(taskInstanceRepository.save(any(TaskInstanceBO.class))).thenReturn(savedInstance);
 
-        StartTaskRequest request = new StartTaskRequest();
-        request.setTaskTemplateId(TEMPLATE_ID);
+        StartTaskCommand command = new StartTaskCommand();
+        command.setTaskTemplateId(TEMPLATE_ID);
 
-        TaskExecutionResponse response = service.startTask(request);
+        TaskExecutionResponse response = service.startTask(command);
 
         ArgumentCaptor<TaskInstanceBO> captor = ArgumentCaptor.forClass(TaskInstanceBO.class);
         verify(taskInstanceRepository).save(captor.capture());
@@ -118,10 +119,10 @@ class TaskExecutionApplicationServiceTest {
         when(taskInstanceRepository.findByExecuteByIdAndState(USER_ID, InstanceState.PAUSED))
                 .thenReturn(Collections.emptyList());
 
-        StartTaskRequest request = new StartTaskRequest();
-        request.setTaskTemplateId(TEMPLATE_ID);
+        StartTaskCommand command = new StartTaskCommand();
+        command.setTaskTemplateId(TEMPLATE_ID);
 
-        assertThatThrownBy(() -> service.startTask(request))
+        assertThatThrownBy(() -> service.startTask(command))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("一次只能执行一个任务");
         verify(taskInstanceRepository, never()).save(any());
@@ -139,7 +140,7 @@ class TaskExecutionApplicationServiceTest {
         verify(taskInstanceRepository).update(captor.capture());
         assertThat(captor.getValue().getExecutionRecords()).hasSize(2);
         assertThat(captor.getValue().getExecutionRecords().get(1).getAction()).isEqualTo(ExecutionAction.PAUSE);
-        assertThat(response.getStatus()).isEqualTo("paused");
+        assertThat(response.getStatus()).isEqualTo(TaskInstanceConstants.STATUS_PAUSED);
     }
 
     @Test
@@ -165,7 +166,7 @@ class TaskExecutionApplicationServiceTest {
         verify(taskInstanceRepository).update(captor.capture());
         assertThat(captor.getValue().getExecutionRecords()).hasSize(3);
         assertThat(captor.getValue().getExecutionRecords().get(2).getAction()).isEqualTo(ExecutionAction.RESUME);
-        assertThat(response.getStatus()).isEqualTo("running");
+        assertThat(response.getStatus()).isEqualTo(TaskInstanceConstants.STATUS_RUNNING);
     }
 
     @Test
@@ -177,10 +178,8 @@ class TaskExecutionApplicationServiceTest {
                 .thenReturn(Collections.emptyList());
         when(userInventoryRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        PointsCalculationResult calcResult = PointsCalculationResult.builder()
-                .totalPoints(BigDecimal.valueOf(60))
-                .details(Collections.emptyList())
-                .build();
+        PointsCalculationResult calcResult = PointsCalculationResult.of(
+                BigDecimal.valueOf(60), Collections.emptyList());
         when(pointsCalculationService.calculate(any(), any(), any())).thenReturn(calcResult);
 
         TaskExecutionResponse response = service.completeTask(INSTANCE_ID);
@@ -212,14 +211,14 @@ class TaskExecutionApplicationServiceTest {
         TaskInstanceBO instance = createRunningInstance();
         when(taskInstanceRepository.findById(INSTANCE_ID)).thenReturn(Optional.of(instance));
         when(taskInstanceRepository.update(any(TaskInstanceBO.class))).thenAnswer(i -> i.getArgument(0));
-        when(pointsCalculationService.calculate(any(), any(), any())).thenReturn(
-                PointsCalculationResult.builder().totalPoints(BigDecimal.ZERO).details(Collections.emptyList()).build());
+        when(pointsCalculationService.calculate(any(), any(), any()))
+                .thenReturn(PointsCalculationResult.empty());
 
         TaskExecutionResponse response = service.cancelTask(INSTANCE_ID);
 
         verify(userInventoryRepository, never()).save(any());
         verify(userInventoryRepository, never()).update(any());
-        assertThat(response.getStatus()).isEqualTo("cancelled");
+        assertThat(response.getStatus()).isEqualTo(TaskInstanceConstants.STATUS_CANCELLED);
         assertThat(response.getActualReward()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
@@ -230,10 +229,8 @@ class TaskExecutionApplicationServiceTest {
         when(taskInstanceRepository.findByExecuteById(USER_ID)).thenReturn(Collections.singletonList(instance));
         when(taskInstanceRepository.update(any(TaskInstanceBO.class))).thenAnswer(i -> i.getArgument(0));
 
-        PointsCalculationResult calcResult = PointsCalculationResult.builder()
-                .totalPoints(BigDecimal.valueOf(60))
-                .details(Collections.emptyList())
-                .build();
+        PointsCalculationResult calcResult = PointsCalculationResult.of(
+                BigDecimal.valueOf(60), Collections.emptyList());
         when(pointsCalculationService.calculate(any(), any(), any())).thenReturn(calcResult);
 
         service.getTaskExecutions();
@@ -253,20 +250,14 @@ class TaskExecutionApplicationServiceTest {
                 .executeById(USER_ID)
                 .executeBy(USER_NO)
                 .build();
-        bo.appendExecutionRecord(ExecutionRecordVO.builder()
-                .action(ExecutionAction.START)
-                .actionTime(LocalDateTime.now().minusMinutes(60))
-                .build());
+        bo.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.START, LocalDateTime.now().minusMinutes(60)));
         return bo;
     }
 
     private TaskInstanceBO createPausedInstance() {
         TaskInstanceBO bo = createRunningInstance();
         bo.setInstanceState(InstanceState.PAUSED);
-        bo.appendExecutionRecord(ExecutionRecordVO.builder()
-                .action(ExecutionAction.PAUSE)
-                .actionTime(LocalDateTime.now().minusMinutes(30))
-                .build());
+        bo.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.PAUSE, LocalDateTime.now().minusMinutes(30)));
         return bo;
     }
 
@@ -274,10 +265,7 @@ class TaskExecutionApplicationServiceTest {
         TaskInstanceBO bo = createRunningInstance();
         bo.setInstanceState(InstanceState.END);
         bo.setEndTime(LocalDateTime.now());
-        bo.appendExecutionRecord(ExecutionRecordVO.builder()
-                .action(ExecutionAction.END)
-                .actionTime(LocalDateTime.now())
-                .build());
+        bo.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.END, LocalDateTime.now()));
         return bo;
     }
 }

@@ -26,10 +26,11 @@ star-reward/
 
 ### Application（应用层）
 
-路径: `application/service/`
+路径: `application/`
 
-- 用例编排、事务管理
-- 调用 Domain Service 和 Repository
+- `command/` - 用例入参（Command）
+- `assembler/` - Command → Entity、Entity → Response 转换
+- `service/` - 用例编排、事务管理，调用 Domain Service 和 Repository
 
 ### Infrastructure（基础设施层）
 
@@ -47,6 +48,7 @@ star-reward/
 
 - `rest/controller/` - REST 控制器
 - `rest/dto/` - 请求/响应 DTO
+- `rest/assembler/` - Request → Command 转换（静态方法，无状态，无需注入）
 - `feign/impl/` - Feign 接口实现
 
 ### Shared（共享层）
@@ -83,7 +85,32 @@ GlobalExceptionHandler (异常处理)
 ## 依赖规则
 
 - Domain 层不依赖其他层
-- Application 层依赖 Domain 层
+- Application 层依赖 Domain 层，**不依赖 Interfaces**（通过 Command 解耦）
 - Infrastructure 层实现 Domain 层接口
 - Interfaces 层依赖 Application 层
 - Shared 层可被所有层使用
+
+## 各层对象转换
+
+- 转换方法统一为**静态方法**，无状态、不注入
+- 命名格式：`sourceToTarget`，如 `requestToCreateCommand`、`createCommandToEntity`、`entityToResponse`、`doToEntity`、`entityToDo`
+
+| 边界 | 输入 | 输出 | 转换器 | 位置 |
+|------|------|------|--------|------|
+| Interfaces → Application | Request | Command | XxxRequestAssembler.requestToXxxCommand | interfaces/rest/assembler |
+| Application → Domain | Command | BO | XxxAssembler.commandToEntity | application/assembler |
+| Application → Domain（Update） | UpdateCommand | Partial BO | XxxAssembler.updateCommandToPartialEntity | application/assembler |
+| Application → 输出 | BO | Response | XxxAssembler.entityToResponse | application/assembler |
+| Infrastructure | DO | BO | XxxConverter.doToEntity | infrastructure/persistence/converter |
+| Infrastructure | BO | DO | XxxConverter.entityToDo | infrastructure/persistence/converter |
+| Infrastructure（Update） | Partial BO | DO | XxxConverter.partialEntityToDo | infrastructure/persistence/converter |
+
+## Application 职责
+
+- 编排 Domain Service 与 Repository，不包含业务规则
+- 事务与流程控制
+- 复杂业务逻辑下沉到 Domain Service，由 Domain Service 调用 Repository
+
+## 补充规则
+
+域常量、充血模型规范见 `domain/domain-constants-rich-model.mdc`
