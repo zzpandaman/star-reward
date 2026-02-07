@@ -121,5 +121,14 @@
             <generatedKey column="id" sqlStatement="Mysql" identity="true" />
             <columnOverride column="is_deleted" property="isDeleted" javaType="java.lang.Byte" />
         </table>
+
+        <!-- 积分记录表 -->
+        <table tableName="reward_point_record" domainObjectName="RewardPointRecordDO"
+            enableCountByExample="true" enableUpdateByExample="true"
+            enableDeleteByExample="true" enableSelectByExample="true"
+            enableSelectByPrimaryKey="true">
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>
     </context>
 </generatorConfiguration>

@@ -12,6 +12,9 @@ import com.star.reward.domain.taskinstance.model.valueobject.PointsCalculationRe
 import com.star.reward.domain.taskinstance.model.valueobject.PointsCalculationSnapshot;
 import com.star.reward.domain.taskinstance.model.valueobject.PointsConversionSegment;
 import com.star.reward.domain.taskinstance.model.valueobject.PointsDetailItem;
+import com.star.reward.domain.pointrecord.model.constant.PointRecordConstants;
+import com.star.reward.domain.pointrecord.model.entity.PointRecordBO;
+import com.star.reward.domain.pointrecord.repository.PointRecordRepository;
 import com.star.reward.domain.taskinstance.repository.TaskInstanceRepository;
 import com.star.reward.domain.taskinstance.service.ExecutionRecordParser;
 import com.star.reward.domain.taskinstance.service.PointsCalculationService;
@@ -50,7 +53,21 @@ public class TaskExecutionApplicationService {
     private final TaskInstanceRepository taskInstanceRepository;
     private final TaskTemplateRepository taskTemplateRepository;
     private final UserInventoryRepository userInventoryRepository;
+    private final PointRecordRepository pointRecordRepository;
     private final PointsCalculationService pointsCalculationService;
+
+    /**
+     * 根据实例编号获取任务执行详情，校验 executeById=当前用户
+     */
+    public TaskExecutionResponse getTaskExecutionByInstanceNo(String instanceNo) {
+        CurrentUserContext user = CurrentUserContext.get();
+        TaskInstanceBO instance = taskInstanceRepository.findByInstanceNo(instanceNo)
+                .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND.getCode(), "任务执行记录不存在"));
+        if (!user.getUserId().equals(instance.getExecuteById())) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "无权访问该任务执行记录");
+        }
+        return toResponse(instance);
+    }
 
     /**
      * 获取任务执行列表
@@ -173,6 +190,12 @@ public class TaskExecutionApplicationService {
         TaskInstanceBO updated = taskInstanceRepository.update(instance);
 
         addUserPoints(user, result.getTotalPoints(), "完成任务: " + instance.getName());
+
+        PointRecordBO earnRecord = PointRecordBO.createEarn(
+                RewardNoGenerator.generate(PointRecordConstants.RECORD_NO_PREFIX),
+                result.getTotalPoints(), user.getUserNo(), user.getUserId(),
+                instance.getInstanceNo(), "完成任务: " + instance.getName(), now);
+        pointRecordRepository.save(earnRecord);
 
         TaskExecutionResponse response = toResponse(updated);
         response.setActualDuration(calculateTotalDurationMinutes(result.getDetails()));

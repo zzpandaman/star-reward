@@ -5,8 +5,11 @@ import com.star.reward.application.service.PurchaseRecordApplicationService;
 import com.star.reward.interfaces.rest.assembler.PurchaseRecordRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.ExchangeProductRequest;
 import com.star.reward.interfaces.rest.dto.response.ExchangeResponse;
+import com.star.reward.interfaces.rest.dto.response.PurchaseRecordResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +24,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class PurchaseRecordController {
 
     private final PurchaseRecordApplicationService purchaseRecordApplicationService;
+
+    /**
+     * 根据购买编号获取详情
+     */
+    @GetMapping("/by-no/{purchaseNo}")
+    public Result<PurchaseRecordResponse> getPurchaseRecordByPurchaseNo(
+            @PathVariable String purchaseNo) {
+        PurchaseRecordResponse response = purchaseRecordApplicationService.getPurchaseRecordByPurchaseNo(purchaseNo);
+        return Result.success(response);
+    }
 
     /**
      * 兑换商品

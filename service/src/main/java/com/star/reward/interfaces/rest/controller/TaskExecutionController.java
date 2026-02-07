@@ -21,6 +21,16 @@ public class TaskExecutionController {
     private final TaskExecutionApplicationService taskExecutionApplicationService;
     
     /**
+     * 根据实例编号获取任务执行详情
+     */
+    @GetMapping("/by-no/{instanceNo}")
+    public Result<TaskExecutionResponse> getTaskExecutionByInstanceNo(
+            @PathVariable String instanceNo) {
+        TaskExecutionResponse response = taskExecutionApplicationService.getTaskExecutionByInstanceNo(instanceNo);
+        return Result.success(response);
+    }
+
+    /**
      * 获取任务执行列表
      */
     @GetMapping

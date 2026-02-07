@@ -2,6 +2,9 @@ package com.star.reward.domain.purchaserecord.service;
 
 import com.star.common.exception.BusinessException;
 import com.star.common.result.ResultCode;
+import com.star.reward.domain.pointrecord.model.constant.PointRecordConstants;
+import com.star.reward.domain.pointrecord.model.entity.PointRecordBO;
+import com.star.reward.domain.pointrecord.repository.PointRecordRepository;
 import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.domain.product.repository.ProductRepository;
 import com.star.reward.domain.purchaserecord.model.constant.PurchaseRecordConstants;
@@ -29,6 +32,7 @@ public class ExchangeService {
     private final ProductRepository productRepository;
     private final UserInventoryRepository userInventoryRepository;
     private final PurchaseRecordRepository purchaseRecordRepository;
+    private final PointRecordRepository pointRecordRepository;
 
     /**
      * 兑换商品
@@ -48,6 +52,8 @@ public class ExchangeService {
         }
 
         BigDecimal pointsRequired = product.getPrice().multiply(quantity);
+        String purchaseNo = RewardNoGenerator.generate(PurchaseRecordConstants.PURCHASE_NO_PREFIX);
+        LocalDateTime now = LocalDateTime.now();
 
         List<UserInventoryBO> pointInventories = userInventoryRepository
                 .findByBelongToIdAndType(userId, InventoryType.POINT);
@@ -64,11 +70,16 @@ public class ExchangeService {
         pointInventory.setQuantity(pointInventory.getQuantity().subtract(pointsRequired));
         pointInventory.setUpdateBy(userNo);
         pointInventory.setUpdateById(userId);
-        pointInventory.setUpdateTime(LocalDateTime.now());
+        pointInventory.setUpdateTime(now);
         userInventoryRepository.update(pointInventory);
 
+        PointRecordBO spendRecord = PointRecordBO.createSpend(
+                RewardNoGenerator.generate(PointRecordConstants.RECORD_NO_PREFIX),
+                pointsRequired, userNo, userId, purchaseNo, "兑换商品: " + product.getName(), now);
+        pointRecordRepository.save(spendRecord);
+
         addProductToInventory(userId, userNo, product, quantity);
-        createPurchaseRecord(userId, userNo, product, quantity);
+        createPurchaseRecord(userId, userNo, product, quantity, purchaseNo, now);
 
         return ExchangeResult.builder()
                 .product(product)
@@ -102,9 +113,8 @@ public class ExchangeService {
         }
     }
 
-    private void createPurchaseRecord(Long userId, String userNo, ProductBO product, BigDecimal quantity) {
-        String purchaseNo = RewardNoGenerator.generate(PurchaseRecordConstants.PURCHASE_NO_PREFIX);
-        LocalDateTime now = LocalDateTime.now();
+    private void createPurchaseRecord(Long userId, String userNo, ProductBO product, BigDecimal quantity,
+            String purchaseNo, LocalDateTime now) {
         PurchaseRecordBO record = PurchaseRecordBO.createFromExchange(
                 product, quantity, userNo, userId, purchaseNo, now);
         purchaseRecordRepository.save(record);
