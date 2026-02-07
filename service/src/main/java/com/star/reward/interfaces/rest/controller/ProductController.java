@@ -23,11 +23,11 @@ public class ProductController {
     private final ProductApplicationService productApplicationService;
     
     /**
-     * 分页查询商品
+     * 分页查询商品（POST JSON 传参）
      */
-    @PostMapping
+    @PostMapping("/query")
     public Result<PageResponse<ProductResponse>> getAllProducts(
-            @RequestBody ProductQueryRequest request) {
+            @RequestBody(required = false) ProductQueryRequest request) {
         PageResponse<ProductResponse> response = productApplicationService.getAllProducts(
                 ProductRequestAssembler.requestToQueryCommand(request));
         return Result.success(response);

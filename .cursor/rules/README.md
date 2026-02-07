@@ -6,6 +6,7 @@
 |------|------|
 | project-structure | 项目结构、DDD 分层 |
 | microservice-integration | 微服务体系（star-common、star-sso、Feign） |
+| pagination-query | 分页查询（QueryRequest/Command 继承 PageRequest、默认值、去冗余） |
 
 ## deploy/ - 部署
 

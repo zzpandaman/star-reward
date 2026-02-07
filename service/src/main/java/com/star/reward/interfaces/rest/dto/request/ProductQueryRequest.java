@@ -1,20 +1,13 @@
 package com.star.reward.interfaces.rest.dto.request;
 
+import com.star.common.page.PageRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 商品列表查询请求
  */
 @Data
-public class ProductQueryRequest {
-
-    /**
-     * 页码，从 1 开始，默认 1
-     */
-    private Integer page = 1;
-
-    /**
-     * 每页条数，默认 10
-     */
-    private Integer pageSize = 10;
+@EqualsAndHashCode(callSuper = true)
+public class ProductQueryRequest extends PageRequest {
 }

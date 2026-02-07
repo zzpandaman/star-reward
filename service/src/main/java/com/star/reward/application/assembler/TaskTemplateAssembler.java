@@ -19,6 +19,26 @@ public final class TaskTemplateAssembler {
     }
 
     /**
+     * Command → QueryParam（供 Repository listByQuery 使用）
+     * page/pageSize 为 null 或 <=0 时使用默认 1、10
+     */
+    public static TaskTemplateQueryParam commandToQueryParam(TaskTemplateQueryCommand command) {
+        TaskTemplateQueryParam param = command == null
+                ? TaskTemplateQueryParam.builder().build()
+                : TaskTemplateQueryParam.builder()
+                .templateNo(command.getTemplateNo())
+                .isPreset(command.getIsPreset())
+                .isDeleted(command.getIsDeleted())
+                .orderBy(command.getOrderBy())
+                .build();
+        int page = command != null && command.getPage() > 0 ? command.getPage() : 1;
+        int pageSize = command != null && command.getPageSize() > 0 ? command.getPageSize() : 10;
+        param.setPage(page);
+        param.setPageSize(pageSize);
+        return param;
+    }
+
+    /**
      * Command → Entity（仅映射业务字段）
      */
     public static TaskTemplateBO createCommandToEntity(CreateTaskTemplateCommand command) {

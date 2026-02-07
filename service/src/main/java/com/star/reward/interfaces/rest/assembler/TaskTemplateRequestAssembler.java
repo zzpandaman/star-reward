@@ -6,6 +6,7 @@ import com.star.reward.application.command.UpdateTaskTemplateCommand;
 import com.star.reward.interfaces.rest.dto.request.CreateTaskTemplateRequest;
 import com.star.reward.interfaces.rest.dto.request.TaskTemplateQueryRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateTaskTemplateRequest;
+import org.springframework.beans.BeanUtils;
 
 /**
  * 任务模板 Request → Command 转换器（Interfaces → Application 边界）
@@ -20,8 +21,7 @@ public final class TaskTemplateRequestAssembler {
             return new TaskTemplateQueryCommand();
         }
         TaskTemplateQueryCommand cmd = new TaskTemplateQueryCommand();
-        cmd.setPage(request.getPage());
-        cmd.setPageSize(request.getPageSize());
+        BeanUtils.copyProperties(request, cmd);
         return cmd;
     }
 

@@ -6,6 +6,7 @@ import com.star.reward.application.command.UpdateProductCommand;
 import com.star.reward.interfaces.rest.dto.request.CreateProductRequest;
 import com.star.reward.interfaces.rest.dto.request.ProductQueryRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateProductRequest;
+import org.springframework.beans.BeanUtils;
 
 /**
  * 商品 Request → Command 转换器（Interfaces → Application 边界）
@@ -20,8 +21,7 @@ public final class ProductRequestAssembler {
             return new ProductQueryCommand();
         }
         ProductQueryCommand cmd = new ProductQueryCommand();
-        cmd.setPage(request.getPage());
-        cmd.setPageSize(request.getPageSize());
+        BeanUtils.copyProperties(request, cmd);
         return cmd;
     }
 

@@ -72,6 +72,16 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
         return list(TaskTemplateQueryParam.builder().isPreset(isPreset).build());
     }
 
+    @Override
+    public List<TaskTemplateBO> listByQuery(TaskTemplateQueryParam param) {
+        return list(param);
+    }
+
+    @Override
+    public long countByQuery(TaskTemplateQueryParam param) {
+        return mapper.countByExample(buildExampleForCount(param));
+    }
+
     private List<TaskTemplateBO> list(TaskTemplateQueryParam param) {
         RewardTaskTemplateDOExample example = buildExample(param);
         return mapper.selectByExample(example).stream()
@@ -98,6 +108,23 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
         }
         if (param != null && param.hasPagination()) {
             example.page(param.getPage(), param.getPageSize());
+        }
+        return example;
+    }
+
+    private static RewardTaskTemplateDOExample buildExampleForCount(TaskTemplateQueryParam param) {
+        RewardTaskTemplateDOExample example = new RewardTaskTemplateDOExample();
+        RewardTaskTemplateDOExample.Criteria c = example.createCriteria();
+        if (param != null) {
+            if (StringUtils.hasText(param.getTemplateNo())) {
+                c.andTemplateNoEqualTo(param.getTemplateNo());
+            }
+            if (param.getIsPreset() != null) {
+                c.andIsPresetEqualTo(param.getIsPreset() ? (byte) 1 : (byte) 0);
+            }
+            c.andIsDeletedEqualTo(param.getIsDeleted() != null ? param.getIsDeleted() : (byte) 0);
+        } else {
+            c.andIsDeletedEqualTo((byte) 0);
         }
         return example;
     }

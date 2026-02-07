@@ -5,6 +5,7 @@ import com.star.common.result.Result;
 import com.star.reward.application.service.TaskTemplateApplicationService;
 import com.star.reward.interfaces.rest.assembler.TaskTemplateRequestAssembler;
 import com.star.reward.interfaces.rest.dto.request.CreateTaskTemplateRequest;
+import com.star.reward.interfaces.rest.dto.request.TaskTemplateQueryRequest;
 import com.star.reward.interfaces.rest.dto.request.UpdateTaskTemplateRequest;
 import com.star.reward.interfaces.rest.dto.response.TaskTemplateResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +23,14 @@ public class TaskTemplateController {
     private final TaskTemplateApplicationService taskTemplateApplicationService;
     
     /**
-     * 获取所有任务模板
+     * 分页查询任务模板（POST JSON 传参）
+     * 参数：page(默认1)、pageSize(默认10)、templateNo、isPreset、isDeleted、orderBy
      */
-    @GetMapping
-    public Result<PageResponse<TaskTemplateResponse>> getAllTaskTemplates() {
-        PageResponse<TaskTemplateResponse> response = taskTemplateApplicationService.getAllTaskTemplates();
+    @PostMapping("/query")
+    public Result<PageResponse<TaskTemplateResponse>> getAllTaskTemplates(
+            @RequestBody(required = false) TaskTemplateQueryRequest request) {
+        PageResponse<TaskTemplateResponse> response = taskTemplateApplicationService.getAllTaskTemplates(
+                TaskTemplateRequestAssembler.requestToQueryCommand(request));
         return Result.success(response);
     }
     

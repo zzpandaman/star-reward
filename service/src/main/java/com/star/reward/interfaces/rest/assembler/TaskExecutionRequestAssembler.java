@@ -4,6 +4,7 @@ import com.star.reward.application.command.StartTaskCommand;
 import com.star.reward.application.command.TaskExecutionQueryCommand;
 import com.star.reward.interfaces.rest.dto.request.StartTaskRequest;
 import com.star.reward.interfaces.rest.dto.request.TaskExecutionQueryRequest;
+import org.springframework.beans.BeanUtils;
 
 /**
  * 任务执行 Request → Command 转换器（Interfaces → Application 边界）
@@ -27,9 +28,7 @@ public final class TaskExecutionRequestAssembler {
             return new TaskExecutionQueryCommand();
         }
         TaskExecutionQueryCommand cmd = new TaskExecutionQueryCommand();
-        cmd.setPage(request.getPage());
-        cmd.setPageSize(request.getPageSize());
-        cmd.setState(request.getState());
+        BeanUtils.copyProperties(request, cmd);
         return cmd;
     }
 }

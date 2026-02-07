@@ -24,6 +24,7 @@ import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
 import com.star.reward.domain.userinventory.model.entity.UserInventoryBO;
 import com.star.reward.domain.userinventory.model.valueobject.InventoryType;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
+import com.star.reward.application.assembler.TaskExecutionAssembler;
 import com.star.reward.application.command.StartTaskCommand;
 import com.star.reward.application.command.TaskExecutionQueryCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
@@ -79,27 +80,13 @@ public class TaskExecutionApplicationService {
     public PageResponse<TaskExecutionResponse> getTaskExecutions(TaskExecutionQueryCommand command) {
         CurrentUserContext user = CurrentUserContext.get();
         Set<InstanceState> stateFilter = resolveStateFilter(command != null ? command.getState() : null);
-        int page = command != null && command.getPage() != null && command.getPage() > 0
-                ? command.getPage() : 1;
-        int pageSize = command != null && command.getPageSize() != null && command.getPageSize() > 0
-                ? command.getPageSize() : 10;
-
-        TaskInstanceQueryParam param = TaskInstanceQueryParam.builder()
-                .executeById(user.getUserId())
-                .instanceStates(stateFilter.stream()
-                        .map(InstanceState::getCode)
-                        .collect(Collectors.toList()))
-                .orderBy("create_time DESC")
-                .build();
-        param.setPage(page);
-        param.setPageSize(pageSize);
-
+        TaskInstanceQueryParam param = TaskExecutionAssembler.commandToTaskInstanceQueryParam(command, user.getUserId(), stateFilter);
         List<TaskInstanceBO> instances = taskInstanceRepository.listByQuery(param);
         long total = taskInstanceRepository.countByQuery(param);
         List<TaskExecutionResponse> responses = instances.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
-        return PageResponse.of(responses, (int) total, page, pageSize);
+        return PageResponse.of(responses, total, param);
     }
 
     private Set<InstanceState> resolveStateFilter(String state) {

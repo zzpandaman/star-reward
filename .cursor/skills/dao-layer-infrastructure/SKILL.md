@@ -46,6 +46,17 @@ For each table:
 - Use only `example.createCriteria().andXxx()`, no `example.or()`
 - Place buildExample and list in RepositoryImpl (private static / private)
 
+## Pagination Query Pattern
+
+When adding listByQuery/countByQuery for paginated queries:
+
+- **QueryRequest** / **QueryCommand** / **QueryParam**: extend `com.star.common.page.PageRequest`, do NOT redeclare page/pageSize
+- **RequestAssembler**: use `BeanUtils.copyProperties(request, cmd)` for QueryCommand conversion
+- **Assembler.commandToQueryParam**: set page/pageSize with defaults (1, 10) when null or <=0; return param ready for Repository
+- **ApplicationService**: call `commandToQueryParam(command)` and use param directly; **禁止** `param.setPage/setPageSize`
+
+See `.cursor/rules/architecture/pagination-query.mdc` for full spec.
+
 ## Checklist
 
 - [ ] generatorConfig: only target tables uncommented
@@ -54,3 +65,4 @@ For each table:
 - [ ] Param covers ALL conditional fields
 - [ ] buildExample(param) is the ONLY place that constructs Example for that table
 - [ ] findByXxx methods only call list(param), no inline example building
+- [ ] Pagination: QueryRequest/Command extend PageRequest; defaults in Assembler only; no redundant setPage/setPageSize in ApplicationService

@@ -5,9 +5,11 @@ import com.star.common.page.PageResponse;
 import com.star.common.result.ResultCode;
 import com.star.reward.application.assembler.TaskTemplateAssembler;
 import com.star.reward.application.command.CreateTaskTemplateCommand;
+import com.star.reward.application.command.TaskTemplateQueryCommand;
 import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
 import com.star.reward.domain.taskinstance.repository.TaskInstanceRepository;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
+import com.star.reward.domain.tasktemplate.model.query.TaskTemplateQueryParam;
 import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
 import com.star.reward.application.command.UpdateTaskTemplateCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskTemplateResponse;
@@ -34,14 +36,16 @@ public class TaskTemplateApplicationService {
     private final TaskInstanceRepository taskInstanceRepository;
     
     /**
-     * 获取所有任务模板
+     * 分页查询任务模板（支持条件：templateNo、isPreset、isDeleted、orderBy）
      */
-    public PageResponse<TaskTemplateResponse> getAllTaskTemplates() {
-        List<TaskTemplateBO> templates = taskTemplateRepository.findAll();
+    public PageResponse<TaskTemplateResponse> getAllTaskTemplates(TaskTemplateQueryCommand command) {
+        TaskTemplateQueryParam param = TaskTemplateAssembler.commandToQueryParam(command);
+        List<TaskTemplateBO> templates = taskTemplateRepository.listByQuery(param);
+        long total = taskTemplateRepository.countByQuery(param);
         List<TaskTemplateResponse> responses = templates.stream()
                 .map(TaskTemplateAssembler::entityToResponse)
                 .collect(Collectors.toList());
-        return PageResponse.of(responses, responses.size(), 1, responses.size());
+        return PageResponse.of(responses, total, param);
     }
     
     /**

@@ -20,14 +20,14 @@ public final class ProductAssembler {
 
     /**
      * Command → QueryParam（供 Repository listByQuery 使用）
+     * page/pageSize 为 null 或 <=0 时使用默认 1、10
      */
     public static ProductQueryParam commandToQueryParam(ProductQueryCommand command) {
-        if (command == null) {
-            return ProductQueryParam.builder().build();
-        }
         ProductQueryParam param = ProductQueryParam.builder().build();
-        param.setPage(command.getPage());
-        param.setPageSize(command.getPageSize());
+        int page = command != null && command.getPage() > 0 ? command.getPage() : 1;
+        int pageSize = command != null && command.getPageSize() > 0 ? command.getPageSize() : 10;
+        param.setPage(page);
+        param.setPageSize(pageSize);
         return param;
     }
 

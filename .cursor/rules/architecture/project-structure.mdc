@@ -98,6 +98,7 @@ GlobalExceptionHandler (异常处理)
 | 边界 | 输入 | 输出 | 转换器 | 位置 |
 |------|------|------|--------|------|
 | Interfaces → Application | Request | Command | XxxRequestAssembler.requestToXxxCommand | interfaces/rest/assembler |
+| Application → Domain（分页查询） | QueryCommand | QueryParam | XxxAssembler.commandToQueryParam | application/assembler |
 | Application → Domain | Command | BO | XxxAssembler.commandToEntity | application/assembler |
 | Application → Domain（Update） | UpdateCommand | Partial BO | XxxAssembler.updateCommandToPartialEntity | application/assembler |
 | Application → 输出 | BO | Response | XxxAssembler.entityToResponse | application/assembler |
@@ -115,3 +116,4 @@ GlobalExceptionHandler (异常处理)
 
 - 域常量、充血模型规范见 `domain/domain-constants-rich-model.mdc`
 - DAO 基建（MyBatis Generator、fix-dao-layer-code、buildExample）见 `domain/dao-layer.mdc`
+- 分页查询（QueryRequest/Command 继承 PageRequest、默认值、去冗余）见 `architecture/pagination-query.mdc`

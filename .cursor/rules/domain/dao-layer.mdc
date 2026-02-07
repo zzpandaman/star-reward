@@ -87,3 +87,5 @@ private static RewardTaskInstanceDOExample buildExample(TaskInstanceQueryParam p
 ## 分页
 
 使用 itfsw LimitPlugin 生成的 `example.page(page, pageSize)`，配合 `selectByExample`、`countByExample` 实现分页查询。
+
+**QueryParam 与 PageRequest**：Param 继承 `com.star.common.page.PageRequest`，page、pageSize 由上层 Assembler 在 `commandToQueryParam` 中统一设置（含默认值 1、10）。ApplicationService 禁止在调用 Repository 前再次 `param.setPage/setPageSize`。详见 `architecture/pagination-query.mdc`。

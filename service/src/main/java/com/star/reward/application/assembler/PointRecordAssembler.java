@@ -18,17 +18,19 @@ public final class PointRecordAssembler {
 
     /**
      * Command → QueryParam（供 Repository listByQuery 使用）
+     * page/pageSize 为 null 或 <=0 时使用默认 1、10
      */
     public static PointRecordQueryParam commandToQueryParam(PointRecordQueryCommand command) {
-        if (command == null) {
-            return PointRecordQueryParam.builder().build();
-        }
-        PointRecordQueryParam param = PointRecordQueryParam.builder()
+        PointRecordQueryParam param = command == null
+                ? PointRecordQueryParam.builder().build()
+                : PointRecordQueryParam.builder()
                 .belongToId(command.getBelongToId())
                 .type(command.getType())
                 .build();
-        param.setPage(command.getPage());
-        param.setPageSize(command.getPageSize());
+        int page = command != null && command.getPage() > 0 ? command.getPage() : 1;
+        int pageSize = command != null && command.getPageSize() > 0 ? command.getPageSize() : 10;
+        param.setPage(page);
+        param.setPageSize(pageSize);
         return param;
     }
 

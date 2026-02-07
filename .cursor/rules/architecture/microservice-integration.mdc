@@ -46,7 +46,7 @@ star-sso  star-reward
 - `Result<T>` - 统一响应
 - `ResultCode` - 响应码枚举
 - `BusinessException` - 业务异常
-- `PageRequest` / `PageResponse<T>` - 分页
+- `PageRequest` / `PageResponse<T>` - 分页。QueryRequest、QueryCommand、QueryParam 继承 PageRequest 复用 page/pageSize，不重复定义。详见 `architecture/pagination-query.mdc`
 
 ```java
 // ✅ 正确

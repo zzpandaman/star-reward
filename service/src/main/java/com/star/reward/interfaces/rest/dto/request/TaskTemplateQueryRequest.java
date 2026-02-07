@@ -1,20 +1,33 @@
 package com.star.reward.interfaces.rest.dto.request;
 
+import com.star.common.page.PageRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
- * 任务模板列表查询请求
+ * 任务模板列表查询请求（支持 POST JSON 分页与条件参数）
  */
 @Data
-public class TaskTemplateQueryRequest {
+@EqualsAndHashCode(callSuper = true)
+public class TaskTemplateQueryRequest extends PageRequest {
 
     /**
-     * 页码，从 1 开始，默认 1
+     * 模板编号（精确匹配）
      */
-    private Integer page = 1;
+    private String templateNo;
 
     /**
-     * 每页条数，默认 10
+     * 是否预设：true/false
      */
-    private Integer pageSize = 10;
+    private Boolean isPreset;
+
+    /**
+     * 是否删除：0-未删除，1-已删除；默认 0
+     */
+    private Byte isDeleted = 0;
+
+    /**
+     * 排序：如 id DESC、create_time ASC
+     */
+    private String orderBy;
 }

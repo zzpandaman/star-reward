@@ -1,0 +1,87 @@
+---
+description: 分页查询规范（QueryRequest/Command 继承 PageRequest、默认值、去冗余）
+alwaysApply: false
+globs: "**/interfaces/rest/dto/request/*Query*.java,**/application/command/*Query*.java,**/application/assembler/*Assembler.java,**/application/service/*ApplicationService.java"
+---
+
+# 分页查询规范
+
+## 原则
+
+- **继承复用**：QueryRequest、QueryCommand、QueryParam 继承 `com.star.common.page.PageRequest`，不重复定义 page、pageSize
+- **默认值集中**：page/pageSize 默认值 (1, 10) 仅在 Assembler 的 `commandToQueryParam` 中处理
+- **禁止冗余**：ApplicationService 禁止再次 `param.setPage/setPageSize`，直接使用 Assembler 返回的 param
+
+## 分层约定
+
+### Interfaces 层
+
+| 类型 | 约定 |
+|------|------|
+| XxxQueryRequest | `extends PageRequest`，仅声明业务条件字段（templateNo、isPreset、state 等） |
+| RequestAssembler | 使用 `BeanUtils.copyProperties(request, cmd)` 复制，不再显式 copy page/pageSize |
+
+```java
+// ✅ 正确
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class TaskTemplateQueryRequest extends PageRequest {
+    private String templateNo;
+    private Boolean isPreset;
+    private Byte isDeleted;
+    private String orderBy;
+}
+
+// ❌ 错误：重复定义 page、pageSize
+public class TaskTemplateQueryRequest {
+    private Integer page = 1;   // 冗余
+    private Integer pageSize = 10;  // 冗余
+}
+```
+
+### Application 层
+
+| 类型 | 约定 |
+|------|------|
+| XxxQueryCommand | `extends PageRequest`，仅声明业务条件字段 |
+| XxxAssembler.commandToQueryParam | 设置 page、pageSize，对 null 或 <=0 使用默认 1、10；返回 param 即可用 |
+| ApplicationService | 直接 `commandToQueryParam(command)` 得到 param，禁止再 `param.setPage/setPageSize` |
+
+```java
+// ✅ 正确：Assembler 统一默认值
+public static TaskTemplateQueryParam commandToQueryParam(TaskTemplateQueryCommand command) {
+    TaskTemplateQueryParam param = ...;
+    int page = command != null && command.getPage() > 0 ? command.getPage() : 1;
+    int pageSize = command != null && command.getPageSize() > 0 ? command.getPageSize() : 10;
+    param.setPage(page);
+    param.setPageSize(pageSize);
+    return param;
+}
+
+// ✅ 正确：ApplicationService 无冗余
+public PageResponse<TaskTemplateResponse> getAllTaskTemplates(TaskTemplateQueryCommand command) {
+    TaskTemplateQueryParam param = TaskTemplateAssembler.commandToQueryParam(command);
+    List<TaskTemplateBO> templates = taskTemplateRepository.listByQuery(param);
+    ...
+}
+
+// ❌ 错误：ApplicationService 冗余设置
+param.setPage(command != null ? command.getPage() : 1);   // 已在 Assembler 处理
+param.setPageSize(command != null ? command.getPageSize() : 10);
+```
+
+### Domain 层
+
+| 类型 | 约定 |
+|------|------|
+| XxxQueryParam | 已 `extends PageRequest`（dao-layer 约定），含条件字段 |
+
+## 特殊情况
+
+- **PointRecordQueryRequest**：若仅含 type 无分页需求，可不继承 PageRequest
+- **Command 含运行时注入**：如 PointRecordQueryCommand.belongToId 由 ApplicationService 从 CurrentUserContext 注入，RequestAssembler 不复制该字段
+
+## 相关规则
+
+- 分页底层实现见 `domain/dao-layer.mdc`（buildExample、example.page）
+- 公共组件 PageRequest 来自 `microservice-integration.mdc`（star-common-core）

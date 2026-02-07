@@ -42,8 +42,6 @@ public class ProductApplicationService {
      */
     public PageResponse<ProductResponse> getAllProducts(ProductQueryCommand command) {
         ProductQueryParam param = ProductAssembler.commandToQueryParam(command);
-        param.setPage(command != null ? command.getPage() : 1);
-        param.setPageSize(command != null ? command.getPageSize() : 10);
         List<ProductBO> products = productRepository.listByQuery(param);
         long total = productRepository.countByQuery(param);
         List<ProductResponse> responses = products.stream()
