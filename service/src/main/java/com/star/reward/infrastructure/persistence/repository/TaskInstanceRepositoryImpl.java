@@ -101,7 +101,7 @@ public class TaskInstanceRepositoryImpl implements TaskInstanceRepository {
 
     private List<TaskInstanceBO> list(TaskInstanceQueryParam param) {
         RewardTaskInstanceDOExample example = buildExample(param);
-        return mapper.selectByExample(example).stream()
+        return mapper.selectByExampleWithBLOBs(example).stream()
                 .map(TaskInstanceConverter::doToEntity)
                 .collect(Collectors.toList());
     }
