@@ -278,6 +278,7 @@ public class TaskExecutionApplicationService {
                 status = TaskInstanceConstants.STATUS_UNKNOWN;
         }
 
+        List<ExecutionRecordVO> records = bo.getExecutionRecords();
         TaskExecutionResponse response = TaskExecutionResponse.builder()
                 .id(bo.getId())
                 .executionNo(bo.getInstanceNo())
@@ -287,7 +288,10 @@ public class TaskExecutionApplicationService {
                 .endTime(bo.getEndTime() != null ? bo.getEndTime().toEpochSecond(ZoneOffset.of("+8")) : null)
                 .status(status)
                 .createTime(bo.getCreateTime())
-                .executionRecords(bo.getExecutionRecords())
+                .executionRecords(records)
+                .totalPausedDuration(ExecutionRecordParser.computeTotalPausedDuration(records))
+                .pausedTime(ExecutionRecordParser.getLastPausedTime(records))
+                .accumulatedExecutionSeconds(ExecutionRecordParser.computeAccumulatedExecutionSeconds(records))
                 .build();
 
         if (bo.getInstanceState() == InstanceState.END) {

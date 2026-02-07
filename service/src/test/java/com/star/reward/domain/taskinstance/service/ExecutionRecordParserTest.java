@@ -7,6 +7,7 @@ import com.star.reward.domain.taskinstance.model.valueobject.ExecutionRecordVO;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -114,5 +115,79 @@ class ExecutionRecordParserTest {
                 record(ExecutionAction.RESUME, T11));
         List<ExecutionInterval> result = ExecutionRecordParser.toExecutionIntervals(records);
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void computeTotalPausedDuration_无暂停() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.END, T11));
+        assertThat(ExecutionRecordParser.computeTotalPausedDuration(records)).isZero();
+    }
+
+    @Test
+    void computeTotalPausedDuration_一次暂停() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.PAUSE, T11),
+                record(ExecutionAction.RESUME, T12),
+                record(ExecutionAction.END, T13));
+        assertThat(ExecutionRecordParser.computeTotalPausedDuration(records)).isEqualTo(3600L);
+    }
+
+    @Test
+    void computeTotalPausedDuration_多次暂停() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.PAUSE, T11),
+                record(ExecutionAction.RESUME, T11.plusMinutes(5)),
+                record(ExecutionAction.PAUSE, T12),
+                record(ExecutionAction.RESUME, T12.plusMinutes(5)),
+                record(ExecutionAction.END, T13));
+        assertThat(ExecutionRecordParser.computeTotalPausedDuration(records)).isEqualTo(600L);
+    }
+
+    @Test
+    void getLastPausedTime_最后为PAUSE() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.PAUSE, T11));
+        assertThat(ExecutionRecordParser.getLastPausedTime(records)).isEqualTo(T11.toEpochSecond(ZoneOffset.of("+8")));
+    }
+
+    @Test
+    void getLastPausedTime_最后非PAUSE() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.PAUSE, T11),
+                record(ExecutionAction.RESUME, T12));
+        assertThat(ExecutionRecordParser.getLastPausedTime(records)).isNull();
+    }
+
+    @Test
+    void computeAccumulatedExecutionSeconds_最后为PAUSE() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.PAUSE, T11));
+        assertThat(ExecutionRecordParser.computeAccumulatedExecutionSeconds(records)).isEqualTo(3600L);
+    }
+
+    @Test
+    void computeAccumulatedExecutionSeconds_多次暂停最后为PAUSE() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.PAUSE, T11),
+                record(ExecutionAction.RESUME, T12),
+                record(ExecutionAction.PAUSE, T13));
+        assertThat(ExecutionRecordParser.computeAccumulatedExecutionSeconds(records)).isEqualTo(7200L);
+    }
+
+    @Test
+    void computeAccumulatedExecutionSeconds_最后非PAUSE() {
+        List<ExecutionRecordVO> records = Arrays.asList(
+                record(ExecutionAction.START, T10),
+                record(ExecutionAction.PAUSE, T11),
+                record(ExecutionAction.RESUME, T12));
+        assertThat(ExecutionRecordParser.computeAccumulatedExecutionSeconds(records)).isNull();
     }
 }

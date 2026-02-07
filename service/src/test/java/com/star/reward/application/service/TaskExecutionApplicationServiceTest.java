@@ -12,6 +12,7 @@ import com.star.reward.domain.taskinstance.repository.TaskInstanceRepository;
 import com.star.reward.domain.taskinstance.service.PointsCalculationService;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.repository.TaskTemplateRepository;
+import com.star.reward.domain.pointrecord.repository.PointRecordRepository;
 import com.star.reward.domain.userinventory.repository.UserInventoryRepository;
 import com.star.reward.application.command.StartTaskCommand;
 import com.star.reward.interfaces.rest.dto.response.TaskExecutionResponse;
@@ -55,6 +56,8 @@ class TaskExecutionApplicationServiceTest {
     private TaskTemplateRepository taskTemplateRepository;
     @Mock
     private UserInventoryRepository userInventoryRepository;
+    @Mock
+    private PointRecordRepository pointRecordRepository;
     @Mock
     private PointsCalculationService pointsCalculationService;
 

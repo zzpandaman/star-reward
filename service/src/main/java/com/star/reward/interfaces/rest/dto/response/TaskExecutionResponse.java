@@ -64,6 +64,11 @@ public class TaskExecutionResponse {
      * 总暂停时长（秒）
      */
     private Long totalPausedDuration;
+
+    /**
+     * 到最近一次暂停为止的已执行秒数，仅 paused 时有值，前端恢复计时器用
+     */
+    private Long accumulatedExecutionSeconds;
     
     /**
      * 实际时长（分钟）
