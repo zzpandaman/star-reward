@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -69,6 +70,16 @@ public class GlobalExceptionHandler {
         Set<ConstraintViolation<?>> violations = e.getConstraintViolations();
         String message = violations.iterator().next().getMessage();
         log.warn("参数校验异常: {}", message);
+        return Result.fail(ResultCode.PARAM_ERROR.getCode(), message);
+    }
+
+    /**
+     * 处理路径参数类型不匹配（如 undefined、非法 ID 等）
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public Result<Void> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException e) {
+        String message = "参数格式错误: " + (e.getValue() != null ? "[" + e.getValue() + "] " : "") + "无法转换为 " + (e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "目标类型");
+        log.warn("参数类型不匹配: {}", message);
         return Result.fail(ResultCode.PARAM_ERROR.getCode(), message);
     }
 

@@ -1,12 +1,10 @@
 package com.star.reward.infrastructure.config;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * MyBatis 配置
+ * MyBatis 配置（MapperScan 已在 Application 中定义，此处避免重复）
  */
 @Configuration
-@MapperScan("com.star.reward.infrastructure.persistence.dao.mapper")
 public class MyBatisConfig {
 }

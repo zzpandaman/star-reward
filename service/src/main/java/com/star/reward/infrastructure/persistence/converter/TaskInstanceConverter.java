@@ -5,6 +5,7 @@ import com.star.reward.domain.taskinstance.model.entity.TaskInstanceBO;
 import com.star.reward.domain.taskinstance.model.valueobject.InstanceState;
 import com.star.reward.domain.tasktemplate.model.valueobject.MinUnit;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardTaskInstanceDO;
+import com.star.reward.shared.context.CurrentUserContext;
 import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
@@ -71,6 +72,9 @@ public final class TaskInstanceConverter {
         target.setEndTime(convertToDate(source.getEndTime()));
         target.setCreateTime(convertToDate(source.getCreateTime()));
         target.setUpdateTime(convertToDate(source.getUpdateTime()));
+
+        // 审计字段：insert 时若为空则从上下文补齐（表字段 NOT NULL）
+        fillAuditFieldsIfNull(target, source);
         
         return target;
     }
@@ -87,5 +91,32 @@ public final class TaskInstanceConverter {
             return null;
         }
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    private static void fillAuditFieldsIfNull(RewardTaskInstanceDO target, TaskInstanceBO source) {
+        if (target.getUpdateBy() != null && target.getUpdateById() != null && target.getUpdateTime() != null) {
+            return;
+        }
+        CurrentUserContext user = CurrentUserContext.get();
+        LocalDateTime now = LocalDateTime.now();
+        if (target.getUpdateBy() == null) {
+            target.setUpdateBy(user != null && user.getUserNo() != null ? user.getUserNo()
+                    : (user != null && user.getUserId() != null ? user.getUserId().toString() : "system"));
+        }
+        if (target.getUpdateById() == null) {
+            target.setUpdateById(user != null && user.getUserId() != null ? user.getUserId() : 0L);
+        }
+        if (target.getUpdateTime() == null) {
+            target.setUpdateTime(convertToDate(now));
+        }
+        if (target.getCreateBy() == null) {
+            target.setCreateBy(target.getUpdateBy());
+        }
+        if (target.getCreateById() == null) {
+            target.setCreateById(target.getUpdateById());
+        }
+        if (target.getCreateTime() == null) {
+            target.setCreateTime(target.getUpdateTime());
+        }
     }
 }

@@ -32,7 +32,28 @@ public class TaskExecutionController {
     }
 
     /**
-     * 获取任务执行列表，支持分页与状态过滤
+     * 获取任务执行列表（GET，query 参数）
+     *
+     * @param state 状态过滤：ongoing|running|paused|all，默认 ongoing
+     * @param page 页码，默认 1
+     * @param pageSize 每页条数，默认 10
+     */
+    @GetMapping
+    public Result<PageResponse<TaskExecutionResponse>> getTaskExecutionsGet(
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer pageSize) {
+        TaskExecutionQueryRequest request = new TaskExecutionQueryRequest();
+        request.setState(state != null ? state : "ongoing");
+        request.setPage(page != null && page > 0 ? page : 1);
+        request.setPageSize(pageSize != null && pageSize > 0 ? pageSize : 10);
+        PageResponse<TaskExecutionResponse> response = taskExecutionApplicationService
+                .getTaskExecutions(TaskExecutionRequestAssembler.requestToQueryCommand(request));
+        return Result.success(response);
+    }
+
+    /**
+     * 获取任务执行列表（POST，Request body）
      *
      * @param request 查询参数：page(默认1)、pageSize(默认10)、state(ongoing|running|paused|all，默认ongoing)
      */

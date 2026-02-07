@@ -2,6 +2,7 @@ package com.star.reward.infrastructure.persistence.converter;
 
 import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.infrastructure.persistence.dao.entity.RewardProductDO;
+import com.star.reward.shared.context.CurrentUserContext;
 import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
@@ -56,6 +57,8 @@ public final class ProductConverter {
         // 时间字段手动处理
         target.setCreateTime(convertToDate(source.getCreateTime()));
         target.setUpdateTime(convertToDate(source.getUpdateTime()));
+
+        fillAuditFieldsIfNull(target);
         
         return target;
     }
@@ -108,5 +111,32 @@ public final class ProductConverter {
             return null;
         }
         return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    private static void fillAuditFieldsIfNull(RewardProductDO target) {
+        if (target.getUpdateBy() != null && target.getUpdateById() != null && target.getUpdateTime() != null) {
+            return;
+        }
+        CurrentUserContext user = CurrentUserContext.get();
+        LocalDateTime now = LocalDateTime.now();
+        if (target.getUpdateBy() == null) {
+            target.setUpdateBy(user != null && user.getUserNo() != null ? user.getUserNo()
+                    : (user != null && user.getUserId() != null ? user.getUserId().toString() : "system"));
+        }
+        if (target.getUpdateById() == null) {
+            target.setUpdateById(user != null && user.getUserId() != null ? user.getUserId() : 0L);
+        }
+        if (target.getUpdateTime() == null) {
+            target.setUpdateTime(convertToDate(now));
+        }
+        if (target.getCreateBy() == null) {
+            target.setCreateBy(target.getUpdateBy());
+        }
+        if (target.getCreateById() == null) {
+            target.setCreateById(target.getUpdateById());
+        }
+        if (target.getCreateTime() == null) {
+            target.setCreateTime(target.getUpdateTime());
+        }
     }
 }

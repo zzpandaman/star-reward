@@ -113,6 +113,8 @@ class TaskExecutionApplicationServiceTest {
         assertThat(captured.getExecutionRecords()).hasSize(1);
         assertThat(captured.getExecutionRecords().get(0).getAction()).isEqualTo(ExecutionAction.START);
         assertThat(response.getExecutionNo()).isEqualTo("EXE001");
+        assertThat(response.getTotalPausedDuration()).isNotNull().isEqualTo(0L);
+        assertThat(response.getTotalExecutionDuration()).isNotNull().isGreaterThanOrEqualTo(0L);
     }
 
     @Test

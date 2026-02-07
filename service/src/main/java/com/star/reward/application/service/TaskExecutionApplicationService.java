@@ -305,6 +305,8 @@ public class TaskExecutionApplicationService {
         }
 
         List<ExecutionRecordVO> records = bo.getExecutionRecords();
+        LocalDateTime endOrNow = (bo.getInstanceState() == InstanceState.END && bo.getEndTime() != null)
+                ? bo.getEndTime() : LocalDateTime.now();
         TaskExecutionResponse response = TaskExecutionResponse.builder()
                 .id(bo.getId())
                 .executionNo(bo.getInstanceNo())
@@ -317,7 +319,7 @@ public class TaskExecutionApplicationService {
                 .executionRecords(records)
                 .totalPausedDuration(ExecutionRecordParser.computeTotalPausedDuration(records))
                 .totalExecutionDuration(ExecutionRecordParser.computeTotalExecutionDuration(
-                        records, bo.getStartTime(), LocalDateTime.now()))
+                        records, bo.getStartTime(), endOrNow))
                 .build();
 
         if (bo.getInstanceState() == InstanceState.END) {
