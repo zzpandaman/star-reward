@@ -214,6 +214,9 @@ public class TaskInstanceBO implements AttributeHolder {
                 .createBy(executeBy)
                 .createById(executeById)
                 .createTime(now)
+                .updateBy(executeBy)
+                .updateById(executeById)
+                .updateTime(now)
                 .build();
         instance.appendExecutionRecord(ExecutionRecordVO.of(ExecutionAction.START, now));
         return instance;

@@ -137,12 +137,17 @@ public class UserInventoryBO {
                 .description(UserInventoryConstants.POINT_INVENTORY_DESCRIPTION)
                 .quantity(quantity)
                 .unit(UserInventoryConstants.POINT_UNIT)
+                .publishBy(userNo)
+                .publishById(userId)
                 .belongTo(userNo)
                 .belongToId(userId)
                 .isDeleted(false)
                 .createBy(userNo)
                 .createById(userId)
                 .createTime(now)
+                .updateBy(userNo)
+                .updateById(userId)
+                .updateTime(now)
                 .build();
     }
 
