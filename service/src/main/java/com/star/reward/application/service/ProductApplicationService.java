@@ -19,6 +19,7 @@ import com.star.reward.interfaces.rest.dto.response.ProductResponse;
 import com.star.reward.shared.context.CurrentUserContext;
 import com.star.reward.domain.shared.util.RewardNoGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,18 +62,27 @@ public class ProductApplicationService {
 
     /**
      * 创建商品
+     * 遇 product_no 唯一键冲突时自动重试生成新编号
      */
     @Transactional
     public ProductResponse createProduct(CreateProductCommand command) {
         CurrentUserContext user = CurrentUserContext.get();
-
         ProductBO product = ProductAssembler.createCommandToEntity(command);
-        product.initForCreate(
-                RewardNoGenerator.generate(ProductConstants.PRODUCT_NO_PREFIX),
-                user.getUserNo(), user.getUserId(), LocalDateTime.now());
-
-        ProductBO saved = productRepository.save(product);
-        return ProductAssembler.entityToResponse(saved);
+        final int maxRetries = 3;
+        for (int i = 0; i < maxRetries; i++) {
+            product.initForCreate(
+                    RewardNoGenerator.generate(ProductConstants.PRODUCT_NO_PREFIX),
+                    user.getUserNo(), user.getUserId(), LocalDateTime.now());
+            try {
+                ProductBO saved = productRepository.save(product);
+                return ProductAssembler.entityToResponse(saved);
+            } catch (DataIntegrityViolationException e) {
+                if (i == maxRetries - 1 || e.getMessage() == null || !e.getMessage().contains("product_no")) {
+                    throw e;
+                }
+            }
+        }
+        throw new BusinessException(ResultCode.SYSTEM_ERROR.getCode(), "创建商品失败，请重试");
     }
     
     /**

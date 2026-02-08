@@ -183,6 +183,9 @@ public class UserInventoryBO {
                 .createBy(belongTo)
                 .createById(belongToId)
                 .createTime(now)
+                .updateBy(belongTo)
+                .updateById(belongToId)
+                .updateTime(now)
                 .build();
     }
 }

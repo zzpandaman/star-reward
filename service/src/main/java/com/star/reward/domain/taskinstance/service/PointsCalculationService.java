@@ -89,7 +89,10 @@ public class PointsCalculationService {
     /**
      * 将执行区间按倍率卡切分，每段取最高有效倍数
      */
-    private List<SegmentWithMultiplier> partitionByMultipliers(TimeRange execRange, List<SegmentWithMultiplier> multiplierSegments) {
+    private List<SegmentWithMultiplier> partitionByMultipliers(
+            TimeRange execRange,
+            List<SegmentWithMultiplier> multiplierSegments
+    ) {
         if (multiplierSegments == null || multiplierSegments.isEmpty()) {
             return Collections.singletonList(new SegmentWithMultiplier(execRange, 1));
         }
@@ -98,6 +101,7 @@ public class PointsCalculationService {
         boundaries.add(execRange.getStart());
         boundaries.add(execRange.getEnd());
 
+        // 收集所有有效交集边界
         for (SegmentWithMultiplier seg : multiplierSegments) {
             TimeRange overlap = execRange.intersect(seg.range);
             if (overlap != null) {
@@ -108,32 +112,34 @@ public class PointsCalculationService {
 
         List<LocalDateTime> sortedBoundaries = boundaries.stream()
                 .filter(t -> !t.isBefore(execRange.getStart()) && !t.isAfter(execRange.getEnd()))
-                .sorted()
                 .collect(Collectors.toList());
 
         if (sortedBoundaries.size() < 2) {
             return Collections.singletonList(new SegmentWithMultiplier(execRange, 1));
         }
 
-        List<SegmentWithMultiplier> result = new ArrayList<>();
+        List<SegmentWithMultiplier> result = new ArrayList<>(sortedBoundaries.size() - 1);
+
         for (int i = 0; i < sortedBoundaries.size() - 1; i++) {
             LocalDateTime segStart = sortedBoundaries.get(i);
             LocalDateTime segEnd = sortedBoundaries.get(i + 1);
-            if (segStart.equals(segEnd)) {
+
+            if (!segStart.isBefore(segEnd)) {
                 continue;
             }
+
             TimeRange subRange = TimeRange.of(segStart, segEnd);
             int maxMultiplier = 1;
+
             for (SegmentWithMultiplier seg : multiplierSegments) {
-                TimeRange overlap = subRange.intersect(seg.range);
-                if (overlap != null && overlap.durationMinutes() > 0) {
-                    if (seg.multiplier > maxMultiplier) {
-                        maxMultiplier = seg.multiplier;
-                    }
+                if (seg.range.intersect(subRange) != null) {
+                    maxMultiplier = Math.max(maxMultiplier, seg.multiplier);
                 }
             }
+
             result.add(new SegmentWithMultiplier(subRange, maxMultiplier));
         }
+
         return result;
     }
 

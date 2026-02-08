@@ -6,6 +6,7 @@ import com.star.reward.application.command.UpdateTaskTemplateCommand;
 import com.star.reward.domain.tasktemplate.model.entity.TaskTemplateBO;
 import com.star.reward.domain.tasktemplate.model.query.TaskTemplateQueryParam;
 import com.star.reward.interfaces.rest.dto.response.TaskTemplateResponse;
+import com.star.reward.shared.context.CurrentUserContext;
 
 import java.time.LocalDateTime;
 
@@ -35,6 +36,7 @@ public final class TaskTemplateAssembler {
         int pageSize = command != null && command.getPageSize() > 0 ? command.getPageSize() : 10;
         param.setPage(page);
         param.setPageSize(pageSize);
+        param.setPublishBy(CurrentUserContext.get().getUserNo());
         return param;
     }
 

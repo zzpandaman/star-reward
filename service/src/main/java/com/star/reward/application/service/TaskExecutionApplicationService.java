@@ -216,11 +216,9 @@ public class TaskExecutionApplicationService {
                 ? instance.getMinUnitPoint()
                 : RewardConstants.DEFAULT_POINTS_PER_MINUTE;
 
-        PointsCalculationResult result = pointsCalculationService.calculate(
-                executionIntervals, multiplierToSegments, pointsPerMin);
+        PointsCalculationResult result = pointsCalculationService.calculate(executionIntervals, multiplierToSegments, pointsPerMin);
 
-        instance.setPointsCalculationSnapshot(
-                PointsCalculationSnapshot.of(result, pointsPerMin, now));
+        instance.setPointsCalculationSnapshot(PointsCalculationSnapshot.of(result, pointsPerMin, now));
 
         TaskInstanceBO updated = taskInstanceRepository.update(instance);
 
@@ -338,19 +336,7 @@ public class TaskExecutionApplicationService {
                 response.setPointsDetails(snapshot.getDetails());
                 response.setActualDuration(calculateTotalDurationMinutes(snapshot.getDetails()));
             } else {
-                List<ExecutionInterval> intervals =
-                        ExecutionRecordParser.toExecutionIntervals(bo.getExecutionRecords());
-                Map<Integer, List<PointsConversionSegment>> multiplierToSegments = Collections.emptyMap();
-                int pointsPerMin = bo.getMinUnitPoint() != null ? bo.getMinUnitPoint() : RewardConstants.DEFAULT_POINTS_PER_MINUTE;
-                PointsCalculationResult result = pointsCalculationService.calculate(
-                        intervals, multiplierToSegments, pointsPerMin);
-                response.setActualReward(result.getTotalPoints());
-                response.setPointsDetails(result.getDetails());
-                response.setActualDuration(calculateTotalDurationMinutes(result.getDetails()));
-                PointsCalculationSnapshot backfill = PointsCalculationSnapshot.of(
-                        result, pointsPerMin, LocalDateTime.now());
-                bo.setPointsCalculationSnapshot(backfill);
-                taskInstanceRepository.update(bo);
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "任务执行结果不存在");
             }
         }
         return response;

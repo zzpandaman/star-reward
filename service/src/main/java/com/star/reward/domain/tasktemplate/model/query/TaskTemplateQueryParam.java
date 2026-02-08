@@ -21,4 +21,5 @@ public class TaskTemplateQueryParam extends PageRequest {
     private Boolean isPreset;
     private Byte isDeleted;
     private String orderBy;
+    private String publishBy;
 }

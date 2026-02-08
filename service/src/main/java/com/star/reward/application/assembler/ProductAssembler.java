@@ -6,6 +6,7 @@ import com.star.reward.application.command.UpdateProductCommand;
 import com.star.reward.domain.product.model.entity.ProductBO;
 import com.star.reward.domain.product.model.query.ProductQueryParam;
 import com.star.reward.interfaces.rest.dto.response.ProductResponse;
+import com.star.reward.shared.context.CurrentUserContext;
 
 import java.time.LocalDateTime;
 
@@ -28,6 +29,7 @@ public final class ProductAssembler {
         int pageSize = command != null && command.getPageSize() > 0 ? command.getPageSize() : 10;
         param.setPage(page);
         param.setPageSize(pageSize);
+        param.setPublishById(CurrentUserContext.get().getUserId());
         return param;
     }
 

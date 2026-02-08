@@ -45,7 +45,10 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 排除登录接口等不需要认证的接口
         String uri = request.getRequestURI();
-        if (uri.startsWith("/api/sso/login") || uri.startsWith("/actuator")) {
+        if (uri.startsWith("/api/sso/login")
+                || uri.startsWith("/actuator")
+                || uri.startsWith("/api/reward/import")
+        ) {
             return true;
         }
         

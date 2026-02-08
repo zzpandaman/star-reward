@@ -103,6 +103,9 @@ public class TaskTemplateRepositoryImpl implements TaskTemplateRepository {
         } else {
             c.andIsDeletedEqualTo((byte) 0);
         }
+        if (param != null && StringUtils.hasText(param.getPublishBy())){
+            c.andPublishByEqualTo(param.getPublishBy());
+        }
         if (param != null && StringUtils.hasText(param.getOrderBy())) {
             example.setOrderByClause(param.getOrderBy());
         }
